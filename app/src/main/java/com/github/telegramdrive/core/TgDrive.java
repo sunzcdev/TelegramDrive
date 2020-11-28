@@ -5,7 +5,7 @@ import java.io.File;
 public class TgDrive {
 
 
-	private DataNode mDataNode = new DataNode();
+	private DataNode mDataNode = new LocalSystemDataNode();
 	private NameNode mNameNode = new NameNode();
 
 	public void upload(String localFilePath, String tdPath) {

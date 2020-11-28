@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 
 public class NameNode {
 	public static final File DIR_ROOT = new File("./dir");
