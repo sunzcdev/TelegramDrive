@@ -5,13 +5,19 @@ import java.io.File;
 public class TgDrive {
 
 
-	private DataNode mDataNode = new LocalSystemDataNode();
+	private DataNode mDataNode = new TelegramDataNode(new TelegramClient());
 	private NameNode mNameNode = new NameNode();
 
-	public void upload(String localFilePath, String tdPath) {
+	public void upload(String localFilePath, final String tdPath) {
 		File localFile = new File(localFilePath);
-		DataInfo dataInfo = mDataNode.split(localFile);
-		mNameNode.createFile(tdPath, dataInfo);
+		mDataNode.split("" + System.currentTimeMillis(), localFile, new Callback<DataInfo, Void>() {
+			@Override
+			public Void call(DataInfo dataInfo) {
+				mNameNode.createFile(tdPath, dataInfo);
+				return null;
+			}
+		});
+
 	}
 
 	public void download(String tdPath, String localFile) {

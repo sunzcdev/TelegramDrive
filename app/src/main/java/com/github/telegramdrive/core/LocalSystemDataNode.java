@@ -17,21 +17,21 @@ public class LocalSystemDataNode extends DataNode {
 	private Executor mergeExecutor = Executors.newFixedThreadPool(8);
 
 	@Override
-	public DataInfo split(File localFile) {
+	public void split(String hashTag, File localFile, Callback<DataInfo, Void> callback) {
 		long fragmentId = generateFragmentId();
 		DataInfo info = new DataInfo(localFile.length());
+		info.setHashTag(hashTag);
 		System.out.println("文件总体积:" + localFile.length() / 1024 / 1024 + "MB");
-		System.out.println("可分" + localFile.length() / 1024 / 1024 / 8 + "份");
+		System.out.println("可分" + localFile.length() / FILE_FRAGMENTATION + "份");
 		long fileOffset = 0;
 		while (fileOffset < localFile.length()) {
 			long length = Math.min(FILE_FRAGMENTATION, localFile.length() - fileOffset);
 			info.addFragment(new DataInfo.DataFragment(fileOffset, String.valueOf(fragmentId), length));
-//			splitExecutor.execute(new WriteRunnable(localFile, fileOffset, length, String.valueOf(fragmentId))
 			new WriteRunnable(localFile, fileOffset, length, String.valueOf(fragmentId)).run();
 			fragmentId++;
 			fileOffset += length;
 		}
-		return info;
+		callback.call(info);
 	}
 
 	private long generateFragmentId() {

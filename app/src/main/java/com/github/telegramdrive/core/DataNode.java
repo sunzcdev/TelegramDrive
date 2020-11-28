@@ -12,7 +12,7 @@ public abstract class DataNode {
 		}
 	}
 
-	public abstract DataInfo split(File localFile);
+	public abstract void split(String hashTag, File localFile, Callback<DataInfo, Void> callback);
 
 	public abstract void merge(DataInfo dataInfo, File localFile);
 

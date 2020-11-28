@@ -7,6 +7,7 @@ public class DataInfo {
 	private List<DataFragment> fragments = new ArrayList<>();
 	private long timeStamp;
 	private long fileLength;
+	private String hashTag;
 
 	DataInfo(long fileLength) {
 		this.fileLength = fileLength;
@@ -29,8 +30,20 @@ public class DataInfo {
 		return fileLength;
 	}
 
+	public void setFragments(List<DataFragment> fragments) {
+		this.fragments = fragments;
+	}
+
+	public void setHashTag(String hashTag) {
+		this.hashTag = hashTag;
+	}
+
+	public String getHashTag() {
+		return this.hashTag;
+	}
+
 	public static class DataFragment {
-		private final String name;
+		private String name;
 		private final long length;
 		private final long fileOffset;
 
@@ -50,6 +63,10 @@ public class DataInfo {
 
 		public long getFileOffset() {
 			return fileOffset;
+		}
+
+		public void setName(String name) {
+			this.name = name;
 		}
 	}
 

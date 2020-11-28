@@ -36,16 +36,16 @@ public class TgDriveTest {
 	@Test
 	public void upload() {
 		TgDrive drive = new TgDrive();
-		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup.exe");
-		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup2.exe");
-		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup3.exe");
+		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup5.exe");
+		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup6.exe");
+		drive.upload("./iTunes64Setup.exe", "/iTunes64Setup7.exe");
 	}
 
 	@Test
 	public void download() {
 		TgDrive drive = new TgDrive();
-		drive.download("/iTunes64Setup2.exe", "./diTunes64Setup2.exe");
-		drive.download("/iTunes64Setup3.exe", "./diTunes64Setup3.exe");
-		drive.download("/iTunes64Setup.exe", "./diTunes64Setup.exe");
+		drive.download("/iTunes64Setup7.exe", "./diTunes64Setup7.exe");
+		drive.download("/iTunes64Setup6.exe", "./diTunes64Setup6.exe");
+		drive.download("/iTunes64Setup5.exe", "./diTunes64Setup5.exe");
 	}
 }
