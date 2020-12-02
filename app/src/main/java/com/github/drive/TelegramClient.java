@@ -1,8 +1,9 @@
-package com.github.telegramdrive.core;
+package com.github.drive;
 
 import java.util.List;
 
 public class TelegramClient {
+
 	public void upload(String hashTag, List<DataInfo.DataFragment> fragments, Callback<List<DataInfo.DataFragment>, Void> callback) {
 		System.out.println("开始上传");
 		for (DataInfo.DataFragment fragment : fragments) {

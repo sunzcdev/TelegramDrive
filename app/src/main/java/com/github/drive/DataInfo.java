@@ -1,4 +1,4 @@
-package com.github.telegramdrive.core;
+package com.github.drive;
 
 import java.util.ArrayList;
 import java.util.List;

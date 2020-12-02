@@ -1,12 +1,12 @@
 package com.github.telegramdrive.core;
 
+import com.github.drive.TgDrive;
+
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import static org.junit.Assert.*;
 
 public class TgDriveTest {
 

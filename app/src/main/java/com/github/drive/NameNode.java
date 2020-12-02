@@ -1,4 +1,4 @@
-package com.github.telegramdrive.core;
+package com.github.drive;
 
 import com.google.gson.Gson;
 

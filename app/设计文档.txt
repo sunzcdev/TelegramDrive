@@ -2,3 +2,18 @@
 记录整个文件的长度，所有碎片的名字，在整个文件中的起始位置
 
 将碎片文件合并为完整的文件。
+
+Telegram 设计
+Chat(Auth(Client))
+client = new Client
+client.create()
+auth = new Auth(client)
+auth.setParam()
+auth.inputPhone
+auth.inputVerifyCode
+user = new User(auth)
+user.getMe
+user.getPhoto
+chat = new Chat(auth)
+chat.getChats()
+chat.createChat();
