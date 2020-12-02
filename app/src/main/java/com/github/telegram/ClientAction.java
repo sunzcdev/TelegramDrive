@@ -8,7 +8,7 @@ import org.drinkless.td.libcore.telegram.TdApi;
 public class ClientAction extends TelegramAction {
 	protected Client client;
 
-	public ClientAction(Context context) {
+	ClientAction(Context context) {
 		super(context);
 	}
 

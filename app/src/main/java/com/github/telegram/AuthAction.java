@@ -1,14 +1,24 @@
 package com.github.telegram;
 
+import android.content.Context;
+
+import org.drinkless.td.libcore.telegram.Client;
 import org.drinkless.td.libcore.telegram.TdApi;
 
-public class AuthAction extends TelegramAction {
-	private final ClientAction client;
+public class AuthAction extends ClientAction {
 	private TdApi.AuthorizationState authorizationState;
 
-	public AuthAction(ClientAction client) {
-		super(client.context);
-		this.client = client;
+	public AuthAction(Context context) {
+		super(context);
+	}
+
+	@Override
+	public void send(TdApi.Function function, Client.ResultHandler handler) {
+		if (authorizationState != null && authorizationState.getConstructor() == TdApi.AuthorizationStateReady.CONSTRUCTOR) {
+			super.send(function, handler);
+		} else {
+			toast("telegram未登录");
+		}
 	}
 
 	public void setParam() {
@@ -24,6 +34,26 @@ public class AuthAction extends TelegramAction {
 		client.send(new TdApi.SetTdlibParameters(param), this);
 	}
 
+	public void CheckDatabaseEncryptionKey() {
+		client.send(new TdApi.CheckDatabaseEncryptionKey(), this);
+	}
+
+	public void SetAuthenticationPhoneNumber() {
+		client.send(new TdApi.SetAuthenticationPhoneNumber("", null), this);
+	}
+
+	public void CheckAuthenticationCode() {
+		client.send(new TdApi.CheckAuthenticationCode(), this);
+	}
+
+	public void RegisterUser() {
+		client.send(new TdApi.RegisterUser("", ""), this);
+	}
+
+	public void CheckAuthenticationPassword() {
+		client.send(new TdApi.CheckAuthenticationPassword(), this);
+	}
+
 	@Override
 	public void onResult(TdApi.Object object) {
 		super.onResult(object);
@@ -36,6 +66,8 @@ public class AuthAction extends TelegramAction {
 				TdApi.UpdateOption updateOption = (TdApi.UpdateOption) object;
 				log(updateOption.toString());
 				break;
+			case TdApi.Error.CONSTRUCTOR:
+				break;
 		}
 	}
 
@@ -44,8 +76,6 @@ public class AuthAction extends TelegramAction {
 			return;
 		}
 		authorizationState = state.authorizationState;
-		toast(state.authorizationState.toString());
-		log(authorizationState.toString());
 		switch (state.authorizationState.getConstructor()) {
 			case TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR:
 				toast("等候设置参数");
@@ -79,23 +109,4 @@ public class AuthAction extends TelegramAction {
 		}
 	}
 
-	public void CheckDatabaseEncryptionKey() {
-		client.send(new TdApi.CheckDatabaseEncryptionKey(), this);
-	}
-
-	public void SetAuthenticationPhoneNumber() {
-		client.send(new TdApi.SetAuthenticationPhoneNumber("", null), this);
-	}
-
-	public void CheckAuthenticationCode() {
-		client.send(new TdApi.CheckAuthenticationCode(), this);
-	}
-
-	public void RegisterUser() {
-		client.send(new TdApi.RegisterUser("", ""), this);
-	}
-
-	public void CheckAuthenticationPassword() {
-		client.send(new TdApi.CheckAuthenticationPassword(), this);
-	}
 }

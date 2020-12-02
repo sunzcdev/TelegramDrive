@@ -4,7 +4,6 @@ import android.content.Context;
 
 import com.github.telegram.AuthAction;
 import com.github.telegram.ChatAction;
-import com.github.telegram.ClientAction;
 import com.github.telegram.MessageAction;
 import com.github.telegram.UserAction;
 
@@ -22,12 +21,11 @@ public class DemoFactory {
 	private final DemoMap demos = new DemoMap();
 
 	public DemoFactory(Context context) {
-		ClientAction clientAction = new ClientAction(context);
-		AuthAction authAction = new AuthAction(clientAction);
-		UserAction userAction = new UserAction(clientAction, authAction);
-		ChatAction chatAction = new ChatAction(clientAction, authAction, userAction);
-		MessageAction messageAction = new MessageAction(clientAction, authAction, userAction, chatAction);
-		demos.put("创建客户端", clientAction::create);
+		AuthAction authAction = new AuthAction(context);
+		UserAction userAction = new UserAction(authAction);
+		ChatAction chatAction = new ChatAction(authAction, userAction);
+		MessageAction messageAction = new MessageAction(authAction, authAction, userAction, chatAction);
+		demos.put("创建客户端", authAction::create);
 		demos.put("设置参数", authAction::setParam);
 		demos.put("获取加密key", authAction::CheckDatabaseEncryptionKey);
 		demos.put("输入手机号", authAction::SetAuthenticationPhoneNumber);
@@ -38,6 +36,7 @@ public class DemoFactory {
 		demos.put("创建私聊", chatAction::CreatePrivateChat);
 		demos.put("GetChats", chatAction::GetChats);
 		demos.put("发送信息", messageAction::SendMessage);
+		demos.put("接收消息", chatAction::getChatHistory);
 	}
 
 	public List<String> getDemos() {
