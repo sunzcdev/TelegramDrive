@@ -6,7 +6,6 @@ public class UserAction extends TelegramAction {
 	private AuthAction authAction;
 
 	public UserAction(AuthAction authAction) {
-		super(authAction.context);
 		this.authAction = authAction;
 	}
 
@@ -20,7 +19,7 @@ public class UserAction extends TelegramAction {
 		switch (object.getConstructor()) {
 			case TdApi.User.CONSTRUCTOR:
 				TdApi.User user = (TdApi.User) object;
-				toast("我的id为:" + user.id);
+				show("我的id为:" + user.id);
 				break;
 		}
 	}

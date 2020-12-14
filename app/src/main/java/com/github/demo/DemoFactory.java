@@ -2,8 +2,10 @@ package com.github.demo;
 
 import android.content.Context;
 
+import com.github.drive.Callback;
 import com.github.telegram.AuthAction;
 import com.github.telegram.ChatAction;
+import com.github.telegram.DialogInfo;
 import com.github.telegram.MessageAction;
 import com.github.telegram.UserAction;
 
@@ -19,9 +21,10 @@ import androidx.annotation.Nullable;
 public class DemoFactory {
 
 	private final DemoMap demos = new DemoMap();
+	private final AuthAction authAction;
 
 	public DemoFactory(Context context) {
-		AuthAction authAction = new AuthAction(context);
+		authAction = new AuthAction(context);
 		UserAction userAction = new UserAction(authAction);
 		ChatAction chatAction = new ChatAction(authAction, userAction);
 		MessageAction messageAction = new MessageAction(authAction, authAction, userAction, chatAction);
@@ -45,6 +48,14 @@ public class DemoFactory {
 
 	public Runnable get(int position) {
 		return demos.get(position);
+	}
+
+	public void setLogListener(Callback<String, Void> callback) {
+		authAction.setLogListener(callback);
+	}
+
+	public void setInputListener(Callback<DialogInfo, Void> callback) {
+		authAction.setInputListener(callback);
 	}
 
 	private static class DemoMap extends HashMap<String, Runnable> {

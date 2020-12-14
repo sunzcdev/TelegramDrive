@@ -1,15 +1,17 @@
 package com.github.telegram;
 
 import android.content.Context;
+import android.text.InputType;
 
 import org.drinkless.td.libcore.telegram.Client;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 public class AuthAction extends ClientAction {
 	private TdApi.AuthorizationState authorizationState;
+	private Context context;
 
 	public AuthAction(Context context) {
-		super(context);
+		this.context = context;
 	}
 
 	@Override
@@ -17,7 +19,7 @@ public class AuthAction extends ClientAction {
 		if (authorizationState != null && authorizationState.getConstructor() == TdApi.AuthorizationStateReady.CONSTRUCTOR) {
 			super.send(function, handler);
 		} else {
-			toast("telegram未登录");
+			log("telegram未登录");
 		}
 	}
 
@@ -39,15 +41,24 @@ public class AuthAction extends ClientAction {
 	}
 
 	public void SetAuthenticationPhoneNumber() {
-		client.send(new TdApi.SetAuthenticationPhoneNumber("", null), this);
+		input(new DialogInfo("请输入手机号", "+8615238670618", InputType.TYPE_CLASS_PHONE, s -> {
+			client.send(new TdApi.SetAuthenticationPhoneNumber(s, null), this);
+			return null;
+		}));
 	}
 
 	public void CheckAuthenticationCode() {
-		client.send(new TdApi.CheckAuthenticationCode(), this);
+		input(new DialogInfo("请输入验证码", "", InputType.TYPE_CLASS_PHONE, s -> {
+			client.send(new TdApi.CheckAuthenticationCode(s), this);
+			return null;
+		}));
 	}
 
 	public void RegisterUser() {
-		client.send(new TdApi.RegisterUser("", ""), this);
+		input(new DialogInfo("请输入用户名", "+8615238670618", InputType.TYPE_CLASS_PHONE, s -> {
+			client.send(new TdApi.RegisterUser(s, ""), this);
+			return null;
+		}));
 	}
 
 	public void CheckAuthenticationPassword() {
@@ -66,6 +77,10 @@ public class AuthAction extends ClientAction {
 				TdApi.UpdateOption updateOption = (TdApi.UpdateOption) object;
 				log(updateOption.toString());
 				break;
+			case TdApi.UpdateConnectionState.CONSTRUCTOR:
+				TdApi.UpdateConnectionState connect = (TdApi.UpdateConnectionState) object;
+				show(connect.state.toString());
+				break;
 			case TdApi.Error.CONSTRUCTOR:
 				break;
 		}
@@ -76,29 +91,35 @@ public class AuthAction extends ClientAction {
 			return;
 		}
 		authorizationState = state.authorizationState;
+		show(authorizationState.toString());
 		switch (state.authorizationState.getConstructor()) {
 			case TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR:
-				toast("等候设置参数");
+				show("等候设置参数");
 				break;
 			case TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR:
-				toast("等候加密key");
+				show("等候加密key");
 				break;
 			case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR:
+				show("输入手机号");
 				break;
 			case TdApi.AuthorizationStateWaitOtherDeviceConfirmation.CONSTRUCTOR:
 				String link = ((TdApi.AuthorizationStateWaitOtherDeviceConfirmation) authorizationState).link;
-				log("登录连接：" + link);
+				show("登录连接：" + link);
 				break;
 			case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR:
+				show("请输入验证码");
 				break;
 			case TdApi.AuthorizationStateWaitRegistration.CONSTRUCTOR:
+				show("请注册注册");
 				break;
 			case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR:
+				show("请输入密码");
 				break;
 			case TdApi.AuthorizationStateReady.CONSTRUCTOR:
-				toast("登录成功");
+				show("登录成功");
 				break;
 			case TdApi.AuthorizationStateLoggingOut.CONSTRUCTOR:
+				show("登出成功");
 				break;
 			case TdApi.AuthorizationStateClosing.CONSTRUCTOR:
 				break;

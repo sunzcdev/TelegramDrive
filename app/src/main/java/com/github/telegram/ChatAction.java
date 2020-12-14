@@ -7,7 +7,6 @@ public class ChatAction extends TelegramAction {
 	private final UserAction userAction;
 
 	public ChatAction(AuthAction authAction, UserAction userAction) {
-		super(authAction.context);
 		this.authAction = authAction;
 		this.userAction = userAction;
 	}
@@ -36,7 +35,7 @@ public class ChatAction extends TelegramAction {
 				TdApi.Messages messages = (TdApi.Messages) object;
 				for (TdApi.Message message : messages.messages) {
 					TdApi.MessageText text = (TdApi.MessageText) message.content;
-					log(text.text.text);
+					show(text.text.text);
 				}
 				break;
 		}
