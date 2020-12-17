@@ -2,9 +2,10 @@ package com.github.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 
 import com.github.telegramdrive.R;
+import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
+import com.psaravan.filebrowserview.lib.FileBrowserEngine.MyFileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 import com.psaravan.filebrowserview.lib.View.FileBrowserView;
 
@@ -21,11 +22,11 @@ public class FolderActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_folder);
 		mFileBrowserView = findViewById(R.id.fileBrowserView);
-		mFileBrowserView.setFileBrowserLayoutType(FileBrowserView.FILE_BROWSER_LIST_LAYOUT) //Set the type of view to use.
-				.setDefaultDirectory(new File("/sdcard/DCIM")) //Set the default directory to show.
+		FileBrowserEngine engine = new MyFileBrowserEngine("/sdcard/DCIM")
 				.setShowHiddenFiles(false) //Set whether or not you want to show hidden files.
-				.excludeFileTypes(new ArrayList<>(), true)
-				.showItemSizes(true) //Shows the sizes of each item in the list.
+				.excludeFileTypes(new ArrayList<>(), true);
+		mFileBrowserView.setFileBrowserLayoutType(FileBrowserView.FILE_BROWSER_LIST_LAYOUT) //Set the type of view to use.
+				.setFileBrowserEngine(engine)
 				.showOverflowMenus(true) //Shows the overflow menus for each item in the list.
 				.showItemIcons(true)
 				.setNavigationInterface(navInterface)
@@ -66,10 +67,7 @@ public class FolderActivity extends Activity {
 	@Override
 	public void onBackPressed() {
 		if (mFileBrowserView != null) {
-			File currentDir = mFileBrowserView.getCurrentDir();
-			if (currentDir != null && !currentDir.equals(mFileBrowserView.getDefaultDirectory())) {
-				mFileBrowserView.getFileBrowserLayout().showDir(currentDir.getParentFile());
-			}
+			mFileBrowserView.showParentDir();
 		} else {
 			super.onBackPressed();
 		}

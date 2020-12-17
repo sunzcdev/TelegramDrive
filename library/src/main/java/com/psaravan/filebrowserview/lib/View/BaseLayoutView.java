@@ -20,6 +20,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AbsListView;
 
+import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 
 import java.io.File;
@@ -32,52 +33,78 @@ import java.io.File;
  */
 public abstract class BaseLayoutView extends View {
 
-    /**
-     * Context intstance.
-     */
-    protected Context mContext;
+	protected final FileBrowserEngine fileBrowserEngine;
+	/**
+	 * Context intstance.
+	 */
+	protected Context mContext;
 
-    /**
-     * The ListView/GridView that displays the file system.
-     */
-    protected AbsListView mAbsListView;
+	/**
+	 * The ListView/GridView that displays the file system.
+	 */
+	protected AbsListView mAbsListView;
 
-    /**
-     * The interface instance that provides callbacks for filesystem
-     * navigation events.
-     */
-    protected NavigationInterface mNavigationInterface;
+	/**
+	 * The interface instance that provides callbacks for filesystem
+	 * navigation events.
+	 */
+	protected NavigationInterface mNavigationInterface;
 
-    /**
-     * Default constructor.
-     */
-    public BaseLayoutView(Context context, AttributeSet attributeSet) {
-        super(context, attributeSet);
-        mContext = context;
-    }
+	/**
+	 * Default constructor.
+	 */
+	public BaseLayoutView(Context context, AttributeSet attributeSet, FileBrowserEngine engine) {
+		super(context, attributeSet);
+		mContext = context;
+		this.fileBrowserEngine = engine;
+	}
 
-    /**
-     * Override this method to implement your logic for loading a directory structure of the
-     * specified dir and to set your AbsListView's adapter.
-     *
-     * @param directory The File object that points to the directory to load.
-     */
-    public abstract void showDir(File directory);
+	/**
+	 * Override this method to implement your logic for loading a directory structure of the
+	 * specified dir and to set your AbsListView's adapter.
+	 *
+	 * @param directory The File object that points to the directory to load.
+	 */
+	public void showDir(File directory) {
+		if (mNavigationInterface != null)
+			mNavigationInterface.onNewDirLoaded(directory);
+	}
 
-    /**
-     * Sets the navigation interface instance for this view.
-     *
-     * @param navInterface The interface instance to assign to this view.
-     */
-    public void setNavigationInterface(NavigationInterface navInterface) {
-        mNavigationInterface = navInterface;
-    }
+	public void showParentDir() {
+		File currentDir = fileBrowserEngine.getCurrentDir();
+		if (currentDir != null && !currentDir.equals(fileBrowserEngine.getDefaultDirectory())) {
+			File parentDir = currentDir.getParentFile();
+			if (mNavigationInterface != null)
+				mNavigationInterface.onParentDirLoaded(parentDir);
+			showDir(parentDir);
+		}
+	}
 
-    /**
-     * @return The ListView/GridView that displays the file system.
-     */
-    public AbsListView getAbsListView() {
-        return mAbsListView;
-    }
+	/**
+	 * 打开文件
+	 *
+	 * @param file 需要打开的文件
+	 */
+	public void openFile(File file) {
+		if (mNavigationInterface != null)
+			mNavigationInterface.onFileOpened(file);
+		fileBrowserEngine.openFile(file);
+	}
+
+	/**
+	 * Sets the navigation interface instance for this view.
+	 *
+	 * @param navInterface The interface instance to assign to this view.
+	 */
+	public void setNavigationInterface(NavigationInterface navInterface) {
+		mNavigationInterface = navInterface;
+	}
+
+	/**
+	 * @return The ListView/GridView that displays the file system.
+	 */
+	public AbsListView getAbsListView() {
+		return mAbsListView;
+	}
 
 }

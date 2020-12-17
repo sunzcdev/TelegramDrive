@@ -37,100 +37,99 @@ import java.io.File;
  */
 public class ListLayoutView extends BaseLayoutView {
 
-    //Context.
-    private Context mContext;
+	//Context.
+	private Context mContext;
 
-    //Parent FileBrowserView and its children.
-    private FileBrowserView mFileBrowserView;
+	//Parent FileBrowserView and its children.
+	private FileBrowserView mFileBrowserView;
 
-    public ListLayoutView(Context context, AttributeSet attributeSet, FileBrowserView fileBrowserView) {
-        super(context, attributeSet);
-        mContext = context;
-        mFileBrowserView = fileBrowserView;
+	public ListLayoutView(Context context, AttributeSet attributeSet, FileBrowserView fileBrowserView) {
+		super(context, attributeSet, fileBrowserView.getFileBrowserEngine());
+		mContext = context;
+		mFileBrowserView = fileBrowserView;
+	}
 
-    }
+	/**
+	 * Inflates the layout and sets the list's adapter.
+	 *
+	 * @param viewGroup The ViewGroup to inflate the layout into.
+	 * @return A reference to this view's instance.
+	 */
+	public ListLayoutView init(ViewGroup viewGroup) {
+		//Inflate the view from the XML resource.
+		View.inflate(mContext, R.layout.simple_list_file_browser, viewGroup);
+		mAbsListView = (ListView) viewGroup.findViewById(R.id.file_browser_list_view);
 
-    /**
-     * Inflates the layout and sets the list's adapter.
-     *
-     * @param viewGroup The ViewGroup to inflate the layout into.
-     * @return A reference to this view's instance.
-     */
-    public ListLayoutView init(ViewGroup viewGroup) {
-        //Inflate the view from the XML resource.
-        View.inflate(mContext, R.layout.simple_list_file_browser, viewGroup);
-        mAbsListView = (ListView) viewGroup.findViewById(R.id.file_browser_list_view);
+		//Display the default dir.
+		showDir(fileBrowserEngine.getDefaultDirectory());
+		return this;
+	}
 
-        //Display the default dir.
-        showDir(mFileBrowserView.getDefaultDirectory());
-        return this;
-    }
+	/**
+	 * Loads the directory structure of the specified dir and sets the ListView's adapter.
+	 *
+	 * @param directory The File object that points to the directory to load.
+	 */
+	@Override
+	public void showDir(File directory) {
+		//Grab the directory's data to feed to the list adapter.
+		AdapterData adapterData = fileBrowserEngine.loadDir(directory);
 
-    /**
-     * Loads the directory structure of the specified dir and sets the ListView's adapter.
-     *
-     * @param directory The File object that points to the directory to load.
-     */
-    @Override
-    public void showDir(File directory) {
-        //Call the interface callback method.
-        if (mNavigationInterface!=null)
-            mNavigationInterface.onNewDirLoaded(directory);
+		//Check if the user wants to use a custom adapter.
+		if (mFileBrowserView.getFileBrowserAdapter() != null) {
+			//The user called setFileBrowserAdapter() and is using a custom adapter.
+			mFileBrowserView.getFileBrowserAdapter().setAdapterData(adapterData);
 
-        //Grab the directory's data to feed to the list adapter.
-        AdapterData adapterData = mFileBrowserView.getFileBrowserEngine().loadDir(directory);
+		} else {
+			//Nope, no custom adapter, so fall back to the default adapter.
+			ListLayoutAdapter adapter = new ListLayoutAdapter(mContext, mFileBrowserView, adapterData);
+			mFileBrowserView.setCustomAdapter(adapter);
 
-        //Check if the user wants to use a custom adapter.
-        if (mFileBrowserView.getFileBrowserAdapter()!=null) {
-            //The user called setFileBrowserAdapter() and is using a custom adapter.
-            mFileBrowserView.getFileBrowserAdapter().setAdapterData(adapterData);
+		}
 
-        } else {
-            //Nope, no custom adapter, so fall back to the default adapter.
-            ListLayoutAdapter adapter = new ListLayoutAdapter(mContext, mFileBrowserView, adapterData);
-            mFileBrowserView.setCustomAdapter(adapter);
+		//Apply the adapter to the ListView.
+		mAbsListView.setAdapter(mFileBrowserView.getFileBrowserAdapter());
 
-        }
+		//Apply the click listener to the ListView.
+		mAbsListView.setOnItemClickListener(onItemClickListener);
 
-        //Apply the adapter to the ListView.
-        mAbsListView.setAdapter(mFileBrowserView.getFileBrowserAdapter());
-
-        //Apply the click listener to the ListView.
-        mAbsListView.setOnItemClickListener(onItemClickListener);
-
-    }
+	}
 
     /**
-     * Click listener for the ListView.
-     */
-    private ListView.OnItemClickListener onItemClickListener = new ListView.OnItemClickListener() {
+	 * Click listener for the ListView.
+	 */
+	private ListView.OnItemClickListener onItemClickListener = new ListView.OnItemClickListener() {
 
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-            File file = null;
-            try {
-                String newPath = mFileBrowserView.getFileBrowserAdapter().getPathsList().get(position);
-                file = new File(newPath);
-                showDir(file);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-                if (mNavigationInterface!=null)
-                    mNavigationInterface.onFileFolderOpenFailed(file);
-
-                //Display an error toast.
-                if (file!=null && file.isDirectory()) {
-                    Toast.makeText(mContext, R.string.unable_to_load_dir, Toast.LENGTH_SHORT).show();
-                } else if (file!=null && !file.isDirectory()) {
-                    Toast.makeText(mContext, R.string.unable_to_open_file, Toast.LENGTH_SHORT).show();
+			File file = null;
+			try {
+				String newPath = mFileBrowserView.getFileBrowserAdapter().getPathsList().get(position);
+				file = new File(newPath);
+				if (file.isDirectory()){
+                    showDir(file);
+                }else {
+				    openFile(file);
                 }
 
-            }
+			} catch (Exception e) {
+				e.printStackTrace();
 
-        }
+				if (mNavigationInterface != null)
+					mNavigationInterface.onFileFolderOpenFailed(file);
 
-    };
+				//Display an error toast.
+				if (file != null && file.isDirectory()) {
+					Toast.makeText(mContext, R.string.unable_to_load_dir, Toast.LENGTH_SHORT).show();
+				} else if (file != null && !file.isDirectory()) {
+					Toast.makeText(mContext, R.string.unable_to_open_file, Toast.LENGTH_SHORT).show();
+				}
+
+			}
+
+		}
+
+	};
 
 }

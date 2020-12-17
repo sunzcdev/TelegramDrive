@@ -86,7 +86,7 @@ public class TabsContainer extends View {
         mTabHost.setup();
 
         //Open the default tab.
-        return openNewBrowserTab(mFileBrowserView.getDefaultDirectory());
+        return openNewBrowserTab(mFileBrowserView.getFileBrowserEngine().getDefaultDirectory());
     }
 
     /**
@@ -124,7 +124,7 @@ public class TabsContainer extends View {
 
         @Override
         public void onClick(View v) {
-            openNewBrowserTab(mFileBrowserView.getDefaultDirectory());
+            openNewBrowserTab(mFileBrowserView.getFileBrowserEngine().getDefaultDirectory());
         }
 
     };
