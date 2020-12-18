@@ -11,33 +11,28 @@ public class ChatAction extends TelegramAction {
 		this.userAction = userAction;
 	}
 
-	public void CreatePrivateChat() {
-		authAction.send(new TdApi.CreatePrivateChat(402780, true), this);
+	public void CreatePrivateChat(ActionCallback callback) {
+		authAction.send(TdApi.Chat.CONSTRUCTOR, new TdApi.CreatePrivateChat(402780, true), callback);
 	}
 
-	public void GetChats() {
-		authAction.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, 100), this);
+	public void GetChats(ActionCallback callback) {
+		authAction.send(TdApi.Chats.CONSTRUCTOR, new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, 100), callback);
+	}
+
+	public void SearchChat(String query, ActionCallback callback) {
+		authAction.send(TdApi.Chats.CONSTRUCTOR, new TdApi.SearchChats(query, 1), callback);
+	}
+
+	public void GetChat(long chatId, ActionCallback callback) {
+		authAction.send(TdApi.Chat.CONSTRUCTOR, new TdApi.GetChat(chatId), callback);
 	}
 
 	public long getCurrentChatId() {
 		return 777000;
 	}
 
-	public void getChatHistory() {
-		authAction.send(new TdApi.GetChatHistory(777000, 0, 0, 10, false), this);
+	public void getChatHistory(ActionCallback callback) {
+		authAction.send(TdApi.Messages.CONSTRUCTOR, new TdApi.GetChatHistory(777000, 0, 0, 10, false), callback);
 	}
 
-	@Override
-	public void onResult(TdApi.Object object) {
-		super.onResult(object);
-		switch (object.getConstructor()) {
-			case TdApi.Messages.CONSTRUCTOR:
-				TdApi.Messages messages = (TdApi.Messages) object;
-				for (TdApi.Message message : messages.messages) {
-					TdApi.MessageText text = (TdApi.MessageText) message.content;
-					show(text.text.text);
-				}
-				break;
-		}
-	}
 }

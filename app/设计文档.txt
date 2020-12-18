@@ -17,3 +17,10 @@ user.getPhoto
 chat = new Chat(auth)
 chat.getChats()
 chat.createChat();
+
+链式异步调用
+getChats->searchChats
+上传
+uploadFile(localFile,cation)->sendFile
+下载
+searchMessages(cation)->downloadFile->fileDirectory

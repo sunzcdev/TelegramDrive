@@ -1,68 +1,51 @@
 package com.github.telegram;
 
-import android.content.Context;
-import android.text.InputType;
+import com.github.ui.LoginListener;
 
 import org.drinkless.td.libcore.telegram.Client;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 public class AuthAction extends ClientAction {
+	private TdApi.TdlibParameters parameters;
 	private TdApi.AuthorizationState authorizationState;
-	private Context context;
+	private LoginListener loginListener;
 
-	public AuthAction(Context context) {
-		this.context = context;
+	public AuthAction(TdApi.TdlibParameters parameters) {
+		this.parameters = parameters;
 	}
 
 	@Override
-	public void send(TdApi.Function function, Client.ResultHandler handler) {
+	public void send(int returnConstructor, TdApi.Function function, ActionCallback callback) {
 		if (authorizationState != null && authorizationState.getConstructor() == TdApi.AuthorizationStateReady.CONSTRUCTOR) {
-			super.send(function, handler);
+			super.send(returnConstructor, function, callback);
 		} else {
 			log("telegram未登录");
 		}
 	}
 
+
 	public void setParam() {
-		TdApi.TdlibParameters param = new TdApi.TdlibParameters();
-		param.apiId = 2277742;
-		param.apiHash = "084b977efa432bfbb24a745a1b9ac913";
-		param.filesDirectory = context.getFilesDir().getAbsolutePath();
-		param.databaseDirectory = context.getExternalFilesDir("db").getAbsolutePath();
-		param.useTestDc = true;
-		param.systemLanguageCode = "en";
-		param.deviceModel = "Android";
-		param.applicationVersion = "1.0";
-		client.send(new TdApi.SetTdlibParameters(param), this);
+		client.send(new TdApi.SetTdlibParameters(this.parameters), this);
 	}
 
 	public void CheckDatabaseEncryptionKey() {
 		client.send(new TdApi.CheckDatabaseEncryptionKey(), this);
 	}
 
-	public void SetAuthenticationPhoneNumber() {
-		input(new DialogInfo("请输入手机号", "+8615238670618", InputType.TYPE_CLASS_PHONE, s -> {
-			client.send(new TdApi.SetAuthenticationPhoneNumber(s, null), this);
-			return null;
-		}));
+	public void SetAuthenticationPhoneNumber(String phone) {
+		client.send(new TdApi.SetAuthenticationPhoneNumber(phone, null), this);
 	}
 
-	public void CheckAuthenticationCode() {
-		input(new DialogInfo("请输入验证码", "", InputType.TYPE_CLASS_PHONE, s -> {
-			client.send(new TdApi.CheckAuthenticationCode(s), this);
-			return null;
-		}));
+	public void CheckAuthenticationCode(String verifyCode) {
+		client.send(new TdApi.CheckAuthenticationCode(verifyCode), this);
 	}
 
-	public void RegisterUser() {
-		input(new DialogInfo("请输入用户名", "+8615238670618", InputType.TYPE_CLASS_PHONE, s -> {
-			client.send(new TdApi.RegisterUser(s, ""), this);
-			return null;
-		}));
+	public void RegisterUser(String userName) {
+		client.send(new TdApi.RegisterUser(userName, ""), this);
 	}
 
-	public void CheckAuthenticationPassword() {
-		client.send(new TdApi.CheckAuthenticationPassword(), this);
+	public void CheckAuthenticationPassword(String password) {
+		client.send(new TdApi.CheckAuthenticationPassword(password), this);
 	}
 
 	@Override
@@ -94,12 +77,13 @@ public class AuthAction extends ClientAction {
 		show(authorizationState.toString());
 		switch (state.authorizationState.getConstructor()) {
 			case TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR:
-				show("等候设置参数");
+				setParam();
 				break;
 			case TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR:
-				show("等候加密key");
+				CheckDatabaseEncryptionKey();
 				break;
 			case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR:
+				loginListener.onInputPhoneNum();
 				show("输入手机号");
 				break;
 			case TdApi.AuthorizationStateWaitOtherDeviceConfirmation.CONSTRUCTOR:
@@ -107,6 +91,7 @@ public class AuthAction extends ClientAction {
 				show("登录连接：" + link);
 				break;
 			case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR:
+				loginListener.onInputVerifyCode();
 				show("请输入验证码");
 				break;
 			case TdApi.AuthorizationStateWaitRegistration.CONSTRUCTOR:
@@ -114,8 +99,10 @@ public class AuthAction extends ClientAction {
 				break;
 			case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR:
 				show("请输入密码");
+				loginListener.onInputPassword();
 				break;
 			case TdApi.AuthorizationStateReady.CONSTRUCTOR:
+				loginListener.onSuccess();
 				show("登录成功");
 				break;
 			case TdApi.AuthorizationStateLoggingOut.CONSTRUCTOR:
@@ -126,8 +113,12 @@ public class AuthAction extends ClientAction {
 			case TdApi.AuthorizationStateClosed.CONSTRUCTOR:
 				break;
 			default:
+				loginListener.onFailure(state.authorizationState.toString());
 				break;
 		}
 	}
 
+	public void setLoginListener(LoginListener loginListener) {
+		this.loginListener = loginListener;
+	}
 }

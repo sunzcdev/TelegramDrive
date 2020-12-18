@@ -61,7 +61,7 @@ public class FileBrowserEngine {
 	private boolean mShowHiddenFiles = false;
 	private boolean mShouldShowFolders = true;
 	//FileExtensionFilter instance and whether or not to show other dirs in the current dir.
-	private HashMap<String, Boolean> mFilterMap;
+	private HashMap<String, Boolean> mFilterMap = new HashMap<>();
 
 	public FileBrowserEngine(String defaultDirPath) {
 		if (defaultDirPath == null) {
@@ -119,7 +119,6 @@ public class FileBrowserEngine {
 			return this;
 
 		setShouldShowFolders(showFolders);
-
 		for (String fileExtension : fileExtensions) {
 			if (fileExtension.startsWith("."))
 				throw new IllegalArgumentException("Invalid file extension format. You must " +

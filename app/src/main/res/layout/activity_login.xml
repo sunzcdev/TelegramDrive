@@ -1,23 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/phone"
-        android:inputType="phone"
-        android:hint="请输入手机号"
-        android:layout_centerVertical="true"
+    <ImageView
+        android:id="@+id/logo"
+        android:scaleType="centerInside"
+        android:src="@mipmap/ic_launcher_round"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="match_parent" />
 
-    <Button
-        android:onClick="login"
-        android:text="登录"
-        android:layout_marginRight="16dp"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/phone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-</RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/phone_rl"
+        android:background="@android:color/background_light"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:id="@+id/phone"
+            android:inputType="phone"
+            android:hint="请输入手机号"
+            android:layout_centerVertical="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:onClick="verifyPhone"
+            android:text="确定"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/verify_code_rl"
+        android:visibility="gone"
+        android:background="@android:color/background_light"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:id="@+id/verify_code"
+            android:inputType="number"
+            android:hint="请输入验证码"
+            android:layout_centerVertical="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:onClick="verifyCode"
+            android:text="校验"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/verify_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/password_rl"
+        android:visibility="gone"
+        android:background="@android:color/background_light"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:id="@+id/password"
+            android:inputType="textPassword"
+            android:hint="请输入密码"
+            android:layout_centerVertical="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:onClick="verifyPassword"
+            android:text="登录"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+
+</FrameLayout>

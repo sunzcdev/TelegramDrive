@@ -1,44 +1,65 @@
 package com.github.telegram;
 
-import android.text.InputType;
-
-import com.github.drive.Callback;
+import android.util.Log;
 
 import org.drinkless.td.libcore.telegram.TdApi;
 
+import java.io.File;
+
 public class MessageAction extends TelegramAction {
-	private final ClientAction clientAction;
 	private final AuthAction authAction;
-	private final UserAction userAction;
-	private final ChatAction chatAction;
+	public static final String TAG = "SUNZC";
 
-	public MessageAction(ClientAction clientAction, AuthAction authAction, UserAction userAction, ChatAction chatAction) {
-		this.clientAction = clientAction;
+	public MessageAction(AuthAction authAction) {
 		this.authAction = authAction;
-		this.userAction = userAction;
-		this.chatAction = chatAction;
 	}
 
-	public void SendMessage() {
-		input(new DialogInfo("请输入消息", "", InputType.TYPE_CLASS_TEXT, s -> {
-			TdApi.InlineKeyboardButton[] row = {
-					new TdApi.InlineKeyboardButton("https://telegram.org?1",
-							new TdApi.InlineKeyboardButtonTypeUrl()),
-					new TdApi.InlineKeyboardButton("https://telegram.org?2",
-							new TdApi.InlineKeyboardButtonTypeUrl()),
-					new TdApi.InlineKeyboardButton("https://telegram.org?3",
-							new TdApi.InlineKeyboardButtonTypeUrl())};
-			TdApi.ReplyMarkup replyMarkup = new TdApi.ReplyMarkupInlineKeyboard(new TdApi.InlineKeyboardButton[][]{row, row, row});
-			TdApi.InputMessageContent content = new TdApi.InputMessageText(new TdApi.FormattedText("s", null), false, true);
-			clientAction.send(new TdApi.SendMessage(chatAction.getCurrentChatId(), 0, 0, null, replyMarkup, content), this);
+	private void sendFile(long chatId, int id, String captionText, ActionCallback callback) {
+		TdApi.InputFile inputFile1 = new TdApi.InputFileId(id);
+		TdApi.FormattedText caption = new TdApi.FormattedText(captionText, null);
+		TdApi.InputMessageContent content = new TdApi.InputMessageDocument(inputFile1, null, false, caption);
+		authAction.send(TdApi.Message.CONSTRUCTOR, new TdApi.SendMessage(chatId, 0, 0, null, null, content), callback);
+	}
+
+	public void UploadFile(long chatId, File file, String captionText, ActionCallback callback) {
+		TdApi.InputFile inputFile = new TdApi.InputFileLocal(file.getAbsolutePath());
+		TdApi.FileType fileType = new TdApi.FileTypeDocument();
+		authAction.send(TdApi.File.CONSTRUCTOR, null, o -> {
+			TdApi.File sendFile = (TdApi.File) o;
+			sendFile(chatId, sendFile.id, captionText, callback);
 			return null;
-		}));
-
+		});
+		TdApi.UploadFile uploadFile = new TdApi.UploadFile(inputFile, fileType, 1);
+		authAction.send(TdApi.UpdateFile.CONSTRUCTOR, uploadFile, o -> {
+			TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o;
+			Log.i(TAG, "upload--->>>" + (updateFile.file.size / updateFile.file.expectedSize));
+			return null;
+		});
 	}
 
-	@Override
-	public void onResult(TdApi.Object object) {
-		super.onResult(object);
-		show(object.toString());
+	private void searchFile(long chatId, String query, ActionCallback callback) {
+		TdApi.SearchMessagesFilter filter = new TdApi.SearchMessagesFilterDocument();
+		TdApi.SearchChatMessages function = new TdApi.SearchChatMessages(chatId, query, null, 0, 0, 10, filter, 0);
+		authAction.send(TdApi.Messages.CONSTRUCTOR, function, callback);
+	}
+
+	public void DownloadFile(long chatId, String query, ActionCallback callback) {
+		searchFile(chatId, query, o -> {
+			TdApi.Messages messages = (TdApi.Messages) o;
+			if (messages.totalCount > 0) {
+				TdApi.MessageDocument content = ((TdApi.MessageDocument) messages.messages[0].content);
+				TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(content.document.document.id, 2, 0, 0, false);
+				authAction.send(TdApi.UpdateFile.CONSTRUCTOR, downloadFile, o1 -> {
+					TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o1;
+					Log.i(TAG, "download--->>>" + ((float) updateFile.file.local.downloadedSize / (float) updateFile.file.expectedSize));
+					if (updateFile.file.local.isDownloadingCompleted) {
+						callback.call(updateFile);
+					}
+					return null;
+				});
+			}
+			return null;
+		});
+
 	}
 }

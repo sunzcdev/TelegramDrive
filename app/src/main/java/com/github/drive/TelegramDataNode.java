@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 
 public class TelegramDataNode extends LocalSystemDataNode {
-	private TelegramClient client;
+	private TelegramDrive client;
 
-	public TelegramDataNode(TelegramClient client) {
+	public TelegramDataNode(TelegramDrive client) {
 		this.client = client;
 	}
 

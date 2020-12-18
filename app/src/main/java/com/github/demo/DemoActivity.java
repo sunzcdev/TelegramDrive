@@ -15,6 +15,8 @@ import com.github.drive.Callback;
 import com.github.telegram.DialogInfo;
 import com.github.telegramdrive.R;
 
+import org.drinkless.td.libcore.telegram.TdApi;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -28,7 +30,16 @@ public class DemoActivity extends Activity implements AdapterView.OnItemClickLis
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_demo);
-		demoFactory = new DemoFactory(this);
+		TdApi.TdlibParameters param = new TdApi.TdlibParameters();
+		param.apiId = 2277742;
+		param.apiHash = "084b977efa432bfbb24a745a1b9ac913";
+		param.filesDirectory = getFilesDir().getAbsolutePath();
+		param.databaseDirectory = getExternalFilesDir("db").getAbsolutePath();
+		param.useTestDc = false;
+		param.systemLanguageCode = "en";
+		param.deviceModel = "Android";
+		param.applicationVersion = "1.0";
+		demoFactory = new DemoFactory(param);
 		ListView demoList = findViewById(R.id.demo_list);
 		ArrayAdapter<String> demoAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, demoFactory.getDemos());
 		demoList.setAdapter(demoAdapter);

@@ -10,7 +10,12 @@ public class UserAction extends TelegramAction {
 	}
 
 	public void GetMe() {
-		authAction.send(new TdApi.GetMe(), this);
+		authAction.send(TdApi.User.CONSTRUCTOR, new TdApi.GetMe(), new ActionCallback() {
+			@Override
+			public Void call(Object o) {
+				return null;
+			}
+		});
 	}
 
 	@Override

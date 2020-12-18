@@ -1,9 +1,11 @@
 package com.github.ui;
 
 public interface LoginListener {
-	void onInputVerifyCode(String code);
+	void onInputPhoneNum();
 
-	void onInputPassword(String password);
+	void onInputVerifyCode();
+
+	void onInputPassword();
 
 	void onSuccess();
 

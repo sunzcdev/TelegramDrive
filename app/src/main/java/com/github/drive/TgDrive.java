@@ -5,7 +5,7 @@ import java.io.File;
 public class TgDrive {
 
 
-	private DataNode mDataNode = new TelegramDataNode(new TelegramClient());
+	private DataNode mDataNode = new TelegramDataNode(new TelegramDrive());
 	private NameNode mNameNode = new NameNode();
 
 	public void upload(String localFilePath, final String tdPath) {
