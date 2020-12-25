@@ -1,2 +1,2 @@
-include ':app',':libtd',':library'
+include ':app',':libbrowser',':libtd'
 rootProject.name='TelegramDrive'

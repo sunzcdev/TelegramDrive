@@ -31,8 +31,14 @@ android {
         // use this line to check all rules except those listed
         disable 'InvalidPackage'
     }
+    compileOptions {
+        sourceCompatibility '1.8'
+        targetCompatibility '1.8'
+    }
 }
 
 dependencies {
     implementation 'androidx.annotation:annotation:1.1.0'
+    testImplementation 'junit:junit:4.13.1'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
 }

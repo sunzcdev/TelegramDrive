@@ -24,3 +24,111 @@ getChats->searchChats
 uploadFile(localFile,cation)->sendFile
 下载
 searchMessages(cation)->downloadFile->fileDirectory
+
+Telegram drive
+利用系统的目录结构来管理网盘，网盘中的文件相对应与telegram中的文件
+使用caption来存储telgram在本地的文件路径和文件名，便于对路径的编辑。同时由于相同的caption和文件名可以共存，可以实现文件的历史版本功能
+dir = "/sdcard/drive"
+
+初始化
+tel = TelegramClient
+tel.login
+
+
+恢复
+telDirZipFile = tel.search("目录")
+if(dir==null){
+    dir = getFileDir("tel")
+    dir.mkdir;
+}else{
+    zip = tel.download(telDirZipFile)
+    zip.unzip(getFileDir())
+}
+备份
+
+上传
+inputFile = ("/sdcard/教程.docx")
+docDir = (dir,"Document")
+docFile = (docDir,inputFile.getName)
+docFile.write(inputFile.length)
+var param = {
+    localFile: inputFile.getPath,
+    captionText: docFile.getPath
+}
+telegramClient.upload(param)
+
+下载
+docFile = ("/Document/教程.docx")
+destDir = ("/sdcard/Download")
+telFile = telegramClient.search(docFile.getPath)
+telegramClient.download(telFile)
+move(docFile+telFile.getName,destDir)
+
+删除
+docFile = ("/Document/教程.docx")
+docFile.delete
+启动备份
+/源文件不做删除
+
+
+移动文件
+docFile = ("/Document/教程.docx")
+destDir = ("/备份/")
+move(docFile,destDir)
+telFile = tel.search(docFile)
+var param = {
+    telFile: telFile,
+    captionText: docFile.getPath
+}
+tel.editFile(param)
+启动备份
+
+移动文件夹
+srcDir = ("/Document/")
+destDir = ("/备份/")
+files = srcDir.listFiles
+for file in files:
+    移动文件
+
+
+重命名
+docFile = ("/Document/教程.docx")
+telFile = tel.search(docFile)
+docFile.rename("文档.docx")
+var param = {
+    telFile: telFile,
+    captionText: docFile.getPath
+}
+tel.editFile(param)
+
+使用caption做文件的主键
+文件大小，文件名，文件类型过滤，文件的缩略图，文件的下载都可以在搜索到的message里获取到
+问题：无法用目录的形式来查询文件及子文件夹
+
+/#Document#f#教程.docx
+/#Document#d#Second
+/Document#Second#f#教程1.docx
+/Document#Second#f#教程2.docx
+/#Document#d#Fourth
+/Document#Fourth#f#教程3.docx
+/Document#Fourth#d#Third
+/Document/Fourth#Third#f#教程4.docx
+/Document/Fourth#Third#f#教程5.docx
+
+{
+    parent: 'C:\Users\Sunzc\Documents\EMMSDK\5.0.1\',
+    current: '文档',
+    fileName: 'Android原生应用'
+}
+
+/
+|-Document
+    |-教程.docx
+    |-Second
+        |-教程1.docx
+        |-教程2.docx
+    |-Fourth
+        |-教程3.docx
+        |-Third
+            |-教程4.docx
+            |-教程5.docx
