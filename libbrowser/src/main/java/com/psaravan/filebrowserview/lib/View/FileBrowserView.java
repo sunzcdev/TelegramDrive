@@ -24,6 +24,8 @@ import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 import com.psaravan.filebrowserview.lib.ListLayout.ListLayoutView;
 
+import org.drinkless.td.libcore.telegram.DriveFile;
+
 public class FileBrowserView extends FrameLayout {
 
 	//Context and AttributeSet.
@@ -215,5 +217,13 @@ public class FileBrowserView extends FrameLayout {
 
 	public void showParentDir() {
 		mFileBrowserLayout.showParentDir();
+	}
+
+	public DriveFile getCurrentDir() {
+		return mFileBrowserEngine.getCurrentDir();
+	}
+
+	public void showCurrentDir() {
+		mFileBrowserLayout.showDir(getCurrentDir());
 	}
 }

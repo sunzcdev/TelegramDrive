@@ -47,6 +47,30 @@ public class DriveFile {
 			TdApi.MessageText text = (TdApi.MessageText) message.content;
 			this.length = 0;
 			parseCaption(text.text.text);
+		} else if (message.content instanceof TdApi.MessageAnimation) {
+			this.isFile = true;
+			TdApi.MessageAnimation document = (TdApi.MessageAnimation) message.content;
+			String caption = document.caption.text;
+			this.length = document.animation.animation.size;
+			parseCaption(caption);
+		} else if (message.content instanceof TdApi.MessageAudio) {
+			this.isFile = true;
+			TdApi.MessageAudio document = (TdApi.MessageAudio) message.content;
+			String caption = document.caption.text;
+			this.length = document.audio.audio.size;
+			parseCaption(caption);
+		} else if (message.content instanceof TdApi.MessagePhoto) {
+			this.isFile = true;
+			TdApi.MessagePhoto document = (TdApi.MessagePhoto) message.content;
+			String caption = document.caption.text;
+			this.length = document.photo.sizes[0].photo.size;
+			parseCaption(caption);
+		} else if (message.content instanceof TdApi.MessageVideo) {
+			this.isFile = true;
+			TdApi.MessageVideo document = (TdApi.MessageVideo) message.content;
+			String caption = document.caption.text;
+			this.length = document.video.video.size;
+			parseCaption(caption);
 		}
 	}
 
@@ -146,27 +170,27 @@ public class DriveFile {
 	}
 
 	public String listAllChildren() {
-		return TAG_SEPARATOR + name + NO_SEPARATOR + (currentDirNo + 1);
+		return TAG_SEPARATOR + name + NO_SEPARATOR + (currentDirNo + 1) + CAPTION_SEPARATOR + TAG_SEPARATOR;
 	}
 
 	public String listChildrenFiles() {
-		return listAllChildren() + CAPTION_SEPARATOR + TAG_SEPARATOR + FILE_TAG;
+		return listAllChildren() + FILE_TAG;
 	}
 
 	public String listChildrenDirs() {
-		return listAllChildren() + CAPTION_SEPARATOR + TAG_SEPARATOR + DIRECTORY_TAG;
+		return listAllChildren() + DIRECTORY_TAG;
 	}
 
 	public String listUncles() {
-		return TAG_SEPARATOR + currentDir + NO_SEPARATOR + currentDirNo;
+		return TAG_SEPARATOR + currentDir + NO_SEPARATOR + currentDirNo + CAPTION_SEPARATOR + TAG_SEPARATOR;
 	}
 
 	public String listUnclesFile() {
-		return listUncles() + CAPTION_SEPARATOR + TAG_SEPARATOR + FILE_TAG;
+		return listUncles() + FILE_TAG;
 	}
 
 	public String listUnclesDir() {
-		return listUncles() + CAPTION_SEPARATOR + TAG_SEPARATOR + DIRECTORY_TAG;
+		return listUncles() + DIRECTORY_TAG;
 	}
 
 	@Override

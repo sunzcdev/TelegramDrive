@@ -4,12 +4,9 @@ import org.drinkless.td.libcore.telegram.TdApi;
 
 public class ChatAction extends TelegramAction {
 	private final AuthAction authAction;
-	private final UserAction userAction;
 	private long currentChatId;
-
-	public ChatAction(AuthAction authAction, UserAction userAction) {
+	public ChatAction(AuthAction authAction) {
 		this.authAction = authAction;
-		this.userAction = userAction;
 	}
 
 	public void CreatePrivateChat(ActionCallback callback) {

@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:name="com.github.App"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/Theme.AppCompat.Light">
         <activity android:name="com.github.MainActivity"></activity>
         <activity android:name="com.github.ui.LoginActivity">
             <intent-filter>

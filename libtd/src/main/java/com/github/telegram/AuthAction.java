@@ -1,6 +1,5 @@
 package com.github.telegram;
 
-import org.drinkless.td.libcore.telegram.Client;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 public class AuthAction extends ClientAction {
