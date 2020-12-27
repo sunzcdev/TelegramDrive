@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.AdapterData;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 import org.drinkless.td.libcore.telegram.DriveFile;
 
@@ -117,7 +118,7 @@ public abstract class AbstractFileBrowserAdapter extends ArrayAdapter<String> {
     /**
      * @return The list of file/subfolder paths within the current directory.
      */
-    public ArrayList<DriveFile> getPathsList() {
+    public ArrayList<DriveFileEntity> getPathsList() {
         if (mAdapterData!=null)
             return mAdapterData.getPathsList();
         else

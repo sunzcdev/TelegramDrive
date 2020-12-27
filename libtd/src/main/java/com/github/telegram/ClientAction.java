@@ -30,18 +30,17 @@ public class ClientAction extends TelegramAction {
 
 	@Override
 	public void onResult(TdApi.Object object) {
+		log(object.toString());
 		if (!callbackMap.isEmpty() && callbackMap.containsKey(object.getConstructor())) {
 			ActionCallback callback = callbackMap.get(object.getConstructor());
 			if (callback != null) {
 				switch (object.getConstructor()) {
 					case TdApi.UpdateFile.CONSTRUCTOR:
-					case TdApi.File.CONSTRUCTOR:
 						break;
 					default:
 						callbackMap.remove(object.getConstructor());
 						break;
 				}
-				log(object.toString());
 				callback.call(object);
 			}
 		}

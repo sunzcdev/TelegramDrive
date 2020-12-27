@@ -15,6 +15,8 @@
  */
 package com.psaravan.filebrowserview.lib.FileBrowserEngine;
 
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
+
 import org.drinkless.td.libcore.telegram.DriveFile;
 
 import java.util.ArrayList;
@@ -28,11 +30,11 @@ public class AdapterData {
 
     private ArrayList<String> mNamesList;
     private ArrayList<Integer> mTypesList;
-    private ArrayList<DriveFile> mPathsList;
+    private ArrayList<DriveFileEntity> mPathsList;
     private ArrayList<String> mSizesList;
 
     public AdapterData(ArrayList<String> namesList, ArrayList<Integer> typesList,
-                       ArrayList<DriveFile> pathsList, ArrayList<String> sizesList) {
+                       ArrayList<DriveFileEntity> pathsList, ArrayList<String> sizesList) {
         mNamesList = namesList;
         mTypesList = typesList;
         mPathsList = pathsList;
@@ -56,11 +58,11 @@ public class AdapterData {
         mTypesList = typesList;
     }
 
-    public ArrayList<DriveFile> getPathsList() {
+    public ArrayList<DriveFileEntity> getPathsList() {
         return mPathsList;
     }
 
-    public void setPathsList(ArrayList<DriveFile> pathsList) {
+    public void setPathsList(ArrayList<DriveFileEntity> pathsList) {
         mPathsList = pathsList;
     }
 

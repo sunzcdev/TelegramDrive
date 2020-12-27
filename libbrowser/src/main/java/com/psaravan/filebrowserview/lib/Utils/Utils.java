@@ -17,7 +17,9 @@ package com.psaravan.filebrowserview.lib.Utils;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.widget.Toast;
 
 /**
  * Helper class with a set of commonly used helper methods.
@@ -26,18 +28,31 @@ import android.util.DisplayMetrics;
  */
 public class Utils {
 
-    /**
-     * Converts the input dp unit to pixels, depending on device density.
-     *
-     * @param dp A value in dp (density independent pixels) unit. Which we need to convert into pixels
-     * @param context Context to get resources and device specific display metrics
-     * @return A floating point value to represent px equivalent to dp depending on device density.
-     */
-    public static float convertDpToPixels(float dp, Context context){
-        Resources resources = context.getResources();
-        DisplayMetrics metrics = resources.getDisplayMetrics();
-        float px = dp * (metrics.densityDpi / 160f);
-        return px;
-    }
+	/**
+	 * Converts the input dp unit to pixels, depending on device density.
+	 *
+	 * @param dp      A value in dp (density independent pixels) unit. Which we need to convert into pixels
+	 * @param context Context to get resources and device specific display metrics
+	 * @return A floating point value to represent px equivalent to dp depending on device density.
+	 */
+	public static float convertDpToPixels(float dp, Context context) {
+		Resources resources = context.getResources();
+		DisplayMetrics metrics = resources.getDisplayMetrics();
+		float px = dp * (metrics.densityDpi / 160f);
+		return px;
+	}
+
+	private static Toast mToast;
+
+	public static void toast(Context context, String msg) {
+		new Handler(context.getMainLooper()).post(() -> {
+			if (mToast != null) {
+				mToast.cancel();
+			}
+			mToast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
+			mToast.show();
+		});
+	}
+
 
 }

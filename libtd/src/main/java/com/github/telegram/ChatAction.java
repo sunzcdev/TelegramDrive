@@ -5,6 +5,7 @@ import org.drinkless.td.libcore.telegram.TdApi;
 public class ChatAction extends TelegramAction {
 	private final AuthAction authAction;
 	private long currentChatId;
+
 	public ChatAction(AuthAction authAction) {
 		this.authAction = authAction;
 	}
@@ -25,12 +26,11 @@ public class ChatAction extends TelegramAction {
 		authAction.send(TdApi.Chat.CONSTRUCTOR, new TdApi.GetChat(chatId), callback);
 	}
 
-	public void setCurrentChatId(long currentChatId) {
-		this.currentChatId = currentChatId;
+	public void OpenChat(long chatId, ActionCallback callback) {
+		authAction.send(TdApi.Ok.CONSTRUCTOR, new TdApi.OpenChat(chatId), callback);
 	}
-
-	public long getCurrentChatId() {
-		return currentChatId;
+	public void CloseChat(long chatId, ActionCallback callback) {
+		authAction.send(TdApi.Ok.CONSTRUCTOR, new TdApi.CloseChat(chatId), callback);
 	}
 
 	public void getChatHistory(ActionCallback callback) {

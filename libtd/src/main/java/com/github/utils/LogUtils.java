@@ -24,4 +24,8 @@ public class LogUtils {
 			Log.i(tag, t.toString());
 		}
 	}
+
+	public static void log(String tag, String msg) {
+		Log.i(tag, msg);
+	}
 }

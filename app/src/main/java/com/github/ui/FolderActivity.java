@@ -1,26 +1,33 @@
 package com.github.ui;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 import com.github.App;
-import com.github.telegram.ActionCallback;
+import com.github.demo.DemoActivity;
 import com.github.telegram.TelegramClient;
 import com.github.telegramdrive.R;
 import com.github.utils.ViewUtils;
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
+import com.psaravan.filebrowserview.lib.Utils.Utils;
 import com.psaravan.filebrowserview.lib.View.FileBrowserView;
-
-import org.drinkless.td.libcore.telegram.DriveFile;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 import java.io.File;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -29,7 +36,7 @@ public class FolderActivity extends AppCompatActivity {
 	private static final int SELECT_FILE = 0x01;
 	private FileBrowserView mFileBrowserView;
 	private View mUploadBt;
-	private TelegramClient client;
+	private FileBrowserEngine engine;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -37,14 +44,9 @@ public class FolderActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_folder);
 		mFileBrowserView = findViewById(R.id.fileBrowserView);
 		mUploadBt = findViewById(R.id.upload);
-		mUploadBt.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				upload();
-			}
-		});
-		client = ((App) getApplication()).getClient();
-		FileBrowserEngine engine = new FileBrowserEngine(client)
+		mUploadBt.setOnClickListener(v -> upload());
+		TelegramClient client = ((App) getApplication()).getClient();
+		engine = new FileBrowserEngine(this, client)
 				.excludeFileTypes(new ArrayList<>(), true);
 		mFileBrowserView
 				.setFileBrowserEngine(engine)
@@ -63,6 +65,36 @@ public class FolderActivity extends AppCompatActivity {
 				Intent.createChooser(intent, "选择要上传的文件"),
 				SELECT_FILE
 		);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.dir_ops_menu, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+		if (item.getItemId() == R.id.create_dir) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("请输入文件夹名字");
+			EditText editText = new EditText(this);
+			editText.setInputType(InputType.TYPE_CLASS_TEXT);
+			builder.setView(editText);
+			builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					String dirName = editText.getText().toString();
+					engine.createDir(dirName);
+					mFileBrowserView.showCurrentDir();
+				}
+			});
+			builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+			builder.show();
+		} else if (item.getItemId() == R.id.refresh) {
+			engine.refresh();
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
@@ -89,40 +121,37 @@ public class FolderActivity extends AppCompatActivity {
 	}
 
 	private void upload(File file) {
-		client.uploadFile(file, mFileBrowserView.getCurrentDir(), new ActionCallback() {
-			@Override
-			public Void call(Object o) {
-				mFileBrowserView.showCurrentDir();
-				return null;
-			}
+		engine.uploadFile(file, o -> {
+			mFileBrowserView.showCurrentDir();
+			return null;
 		});
 	}
 
 	private NavigationInterface navInterface = new NavigationInterface() {
 
 		@Override
-		public void onNewDirLoaded(DriveFile dirFile) {
+		public void onNewDirLoaded(DriveFileEntity dirFile) {
 			//Update the action bar title.
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					setTitle(dirFile.getFilePath());
+					setTitle(dirFile.name);
 				}
 			});
 		}
 
 		@Override
-		public void onFileOpened(DriveFile file) {
+		public void onFileOpened(DriveFileEntity file) {
+			Utils.toast(FolderActivity.this, file.name + "下载完成");
+		}
+
+		@Override
+		public void onParentDirLoaded(DriveFileEntity dirFile) {
 
 		}
 
 		@Override
-		public void onParentDirLoaded(DriveFile dirFile) {
-
-		}
-
-		@Override
-		public void onFileFolderOpenFailed(DriveFile file) {
+		public void onFileFolderOpenFailed(DriveFileEntity file) {
 
 		}
 

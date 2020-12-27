@@ -1,15 +1,14 @@
 package com.github.telegram;
 
-import android.util.Log;
-
-import com.github.drive.Callback;
-import com.github.utils.LogUtils;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
-import java.util.Arrays;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class TelegramClient {
 	private static final String TAG = "client";
@@ -17,28 +16,34 @@ public class TelegramClient {
 	public final AuthAction auth;
 	public final ChatAction chat;
 	public final MessageAction message;
-	private final UserAction user;
+	private final SharedPreferences sp;
 	private long chatId;
-	private int userId;
 
-	public TelegramClient(TdApi.TdlibParameters parameters) {
+	public TelegramClient(Context context, TdApi.TdlibParameters parameters) {
+		sp = context.getSharedPreferences("tel_drive", MODE_PRIVATE);
+		if (sp.contains("chat_id")) {
+			chatId = sp.getLong("chat_id", -1);
+		}
 		auth = new AuthAction(parameters);
-		user = new UserAction(auth);
 		chat = new ChatAction(auth);
 		message = new MessageAction(auth);
 	}
 
 	public static TelegramClient client;
 
-	public static TelegramClient create(TdApi.TdlibParameters parameters) {
+	public static TelegramClient create(Context context, TdApi.TdlibParameters parameters) {
 		if (client == null) {
-			return new TelegramClient(parameters);
+			return new TelegramClient(context, parameters);
 		} else {
 			return client;
 		}
 	}
 
 	public void getDriveChat(ActionCallback callback) {
+//		if (chatId != -1) {
+//			chat.OpenChat(chatId, callback);
+//			return;
+//		}
 		chat.GetChats(o -> {
 			TdApi.Chats chats = (TdApi.Chats) o;
 			if (chats.totalCount > 0) {
@@ -48,12 +53,10 @@ public class TelegramClient {
 						chat.GetChat(chats1.chatIds[0], o2 -> {
 							TdApi.Chat currentChat = (TdApi.Chat) o2;
 							chatId = currentChat.id;
-							user.GetMe(o3 -> {
-								TdApi.User user = (TdApi.User) o3;
-								userId = user.id;
-								callback.call(currentChat);
-								return null;
-							});
+							SharedPreferences.Editor editor = sp.edit();
+							editor.putLong("chat_id", chatId);
+							editor.apply();
+							chat.OpenChat(chatId, callback);
 							return null;
 						});
 					}
@@ -64,47 +67,44 @@ public class TelegramClient {
 		});
 	}
 
-	public void listFiles(DriveFile directory, Callback<DriveFile[], Void> driveFileVoidCallback) {
-		message.listAll(userId, chatId, directory, o -> {
-			TdApi.Messages messages = (TdApi.Messages) o;
-			int size = messages.messages.length;
-			DriveFile[] files = new DriveFile[size];
-			if (size > 0) {
-				for (int i = 0; i < size; i++) {
-					TdApi.Message message = messages.messages[i];
-					files[i] = new DriveFile(message);
-				}
-			}
-			LogUtils.printArr(TAG + "--文件", files);
-			driveFileVoidCallback.call(files);
+	public void uploadFile(File localFile, ActionCallback callback) {
+		chat.OpenChat(chatId, o -> {
+			message.UploadFile(chatId, localFile, o12 -> {
+				chat.CloseChat(chatId, o1 -> {
+					if (callback != null)
+						callback.call(o12);
+					return null;
+				});
+				return null;
+			});
 			return null;
 		});
 	}
 
-	public void uploadFile(File localFile, DriveFile destDir, ActionCallback callback) {
-		DriveFile file = new DriveFile(localFile);
-		file.move(destDir);
-		message.UploadFile(chatId, localFile, file, callback);
-	}
-
-	public void downloadFile(DriveFile file, ActionCallback callback) {
-		message.DownloadFile(file, callback);
-	}
-
-	public void move(DriveFile file, DriveFile destDir, ActionCallback callback) {
-		file.move(destDir);
-		message.EditFile(chatId, file, callback);
+	public void downloadFile(String remoteId, ActionCallback callback) {
+		chat.OpenChat(chatId, o -> {
+			message.DownloadFile(remoteId, new ActionCallback() {
+				@Override
+				public Boolean call(Object o) {
+					chat.CloseChat(chatId, new ActionCallback() {
+						@Override
+						public Boolean call(Object o1) {
+							if (callback != null)
+								callback.call(o);
+							return null;
+						}
+					});
+					return null;
+				}
+			});
+			return null;
+		});
 	}
 
 	public void copy(DriveFile file, DriveFile destDir) {
 	}
 
 	public void copyDir(DriveFile dir, DriveFile destDir) {
-	}
-
-	public void rename(DriveFile file, String name, ActionCallback callback) {
-		file.rename(name);
-		message.EditFile(chatId, file, callback);
 	}
 
 	public void delete(DriveFile file, ActionCallback callback) {

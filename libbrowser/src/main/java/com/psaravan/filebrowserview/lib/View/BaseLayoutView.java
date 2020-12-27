@@ -20,19 +20,15 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AbsListView;
 
+import com.github.telegram.ActionCallback;
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 import org.drinkless.td.libcore.telegram.DriveFile;
 
 import java.io.File;
 
-/**
- * The base layout that is extended by {@link com.psaravan.filebrowserview.lib.ListLayout.ListLayoutView}
- * and {@link com.psaravan.filebrowserview.lib.GridLayout.GridLayoutView}.
- *
- * @author Saravan Pantham
- */
 public abstract class BaseLayoutView extends View {
 
 	protected final FileBrowserEngine fileBrowserEngine;
@@ -67,15 +63,15 @@ public abstract class BaseLayoutView extends View {
 	 *
 	 * @param directory The File object that points to the directory to load.
 	 */
-	public void showDir(DriveFile directory) {
+	public void showDir(DriveFileEntity directory) {
 		if (mNavigationInterface != null)
 			mNavigationInterface.onNewDirLoaded(directory);
 	}
 
 	public void showParentDir() {
-		DriveFile currentDir = fileBrowserEngine.getCurrentDir();
-		if (currentDir != null && !currentDir.equals(fileBrowserEngine.getDefaultDirectory())) {
-			DriveFile parentDir = currentDir.getParentFile();
+		DriveFileEntity currentDir = fileBrowserEngine.getCurrentDir();
+		DriveFileEntity parentDir = fileBrowserEngine.getParentFile(currentDir);
+		if (parentDir != null && parentDir.id != 0) {
 			if (mNavigationInterface != null)
 				mNavigationInterface.onParentDirLoaded(parentDir);
 			showDir(parentDir);
@@ -87,10 +83,12 @@ public abstract class BaseLayoutView extends View {
 	 *
 	 * @param file 需要打开的文件
 	 */
-	public void openFile(DriveFile file) {
-		if (mNavigationInterface != null)
-			mNavigationInterface.onFileOpened(file);
-		fileBrowserEngine.openFile(file);
+	public void openFile(DriveFileEntity file) {
+		fileBrowserEngine.openFile(file, o -> {
+			if (mNavigationInterface != null)
+				mNavigationInterface.onFileOpened(file);
+			return null;
+		});
 	}
 
 	/**

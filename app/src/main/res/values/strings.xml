@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TelegramDrive</string>
+    <string name="create_dir">新建文件夹</string>
+    <string name="refresh">刷新</string>
 </resources>

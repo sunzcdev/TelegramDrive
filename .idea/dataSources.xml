@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="SQLite - file.db" uuid="1d18e235-5194-4f7d-afac-8fbf5ec16563">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:C:\Users\Sunzc\Documents\file.db</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="file_browser.db" uuid="031e78f6-8a69-4722-85e5-a409a9182fbb">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/Desktop/file_browser.db</jdbc-url>
+    </data-source>
+  </component>
+</project>

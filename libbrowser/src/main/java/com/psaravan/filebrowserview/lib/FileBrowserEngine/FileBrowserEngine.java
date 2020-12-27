@@ -15,15 +15,23 @@
  */
 package com.psaravan.filebrowserview.lib.FileBrowserEngine;
 
+import android.content.Context;
+
 import com.github.drive.Callback;
 import com.github.telegram.ActionCallback;
 import com.github.telegram.TelegramClient;
+import com.github.utils.LogUtils;
+import com.psaravan.filebrowserview.lib.db.DriveDBManager;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
+import com.psaravan.filebrowserview.lib.db.FileBrowserDao;
 
-import org.drinkless.td.libcore.telegram.DriveFile;
+import org.drinkless.td.libcore.telegram.TdApi;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Convenience class that exposes the Android file system and provides a
@@ -33,9 +41,11 @@ import java.util.HashMap;
  */
 public class FileBrowserEngine {
 
+	private static final String TAG = "FileBrowser";
 	//Current dir instance.
-	private DriveFile mCurrentDir;
-	private TelegramClient client;
+	private DriveFileEntity mCurrentDir;
+	private final TelegramClient client;
+	private final FileBrowserDao dao;
 	//File type constants.
 	public static final int FILE_AUDIO = 0;
 	public static final int FILE_VIDEO = 1;
@@ -49,15 +59,24 @@ public class FileBrowserEngine {
 	private final long GIGABYTES = MEGABYTES * KILOBYTES;
 	private final long TERABYTES = GIGABYTES * KILOBYTES;
 	//Default directory to display.
-	public static final DriveFile ROOT = new DriveFile();
+	public DriveFileEntity ROOT;
 
 	//Flag to show/hide hidden files.
 	private boolean mShouldShowFolders = true;
 	//FileExtensionFilter instance and whether or not to show other dirs in the current dir.
 	private HashMap<String, Boolean> mFilterMap = new HashMap<>();
 
-	public FileBrowserEngine(TelegramClient client) {
+	public FileBrowserEngine(Context context, TelegramClient client) {
 		this.client = client;
+		this.dao = DriveDBManager.getDefault(context, null).getFileBrowserDao();
+		ROOT = this.dao.getFile(1);
+		if (ROOT == null) {
+			DriveFileEntity file = new DriveFileEntity();
+			file.name = "root";
+			file.dirId = 0;
+			this.dao.insert(file);
+			ROOT = this.dao.getFile(1);
+		}
 	}
 
 	/**
@@ -95,7 +114,7 @@ public class FileBrowserEngine {
 	 * @return A File object that points to the default directory that should be
 	 * displayed for this FileBrowserView instance.
 	 */
-	public DriveFile getDefaultDirectory() {
+	public DriveFileEntity getDefaultDirectory() {
 		return ROOT;
 	}
 
@@ -116,111 +135,92 @@ public class FileBrowserEngine {
 	 * @param directory The file object to points to the directory to load.
 	 * @return An {@link AdapterData} object that holds the data of the specified directory.
 	 */
-	public void loadDir(DriveFile directory, Callback<AdapterData,Void> callback) {
+	public void loadDir(DriveFileEntity directory, Callback<AdapterData, Void> callback) {
 		mCurrentDir = directory;
-		//Init the directory's data arrays.
-		//Grab a list of all files/subdirs within the specified directory.
-		client.listFiles(directory, files -> {
-			ArrayList<String> namesList = new ArrayList<String>();
-			ArrayList<DriveFile> pathsList = new ArrayList<>();
-			ArrayList<Integer> typesList = new ArrayList<Integer>();
-			ArrayList<String> sizesList = new ArrayList<String>();
-			if (files != null) {
-				//TODO 对文件进行排序
-//					Arrays.sort(files, NameFileComparator.NAME_INSENSITIVE_COMPARATOR);
-				for (DriveFile file : files) {
-					if (!file.isFile() && shouldShowFolders()) {
-						pathsList.add(file);
-						namesList.add(file.getName());
-						//TODO 如何做到一次遍历就可以获取一级子文件夹的内容
-//							File[] listOfFiles = file.listFiles();
-//
-							typesList.add(FOLDER);
-//							if (listOfFiles != null) {
-//								if (listOfFiles.length == 1) {
-//									sizesList.add("" + listOfFiles.length + " item");
-//								} else {
-//									sizesList.add("" + listOfFiles.length + " items");
-//								}
-//							} else {
-						sizesList.add("");
-//							}
+		List<DriveFileEntity> files = dao.list(directory.id);
+		ArrayList<String> namesList = new ArrayList<String>();
+		ArrayList<DriveFileEntity> pathsList = new ArrayList<>();
+		ArrayList<Integer> typesList = new ArrayList<Integer>();
+		ArrayList<String> sizesList = new ArrayList<String>();
+		if (files != null) {
+			for (DriveFileEntity file : files) {
+				if (!file.isFile() && shouldShowFolders()) {
+					pathsList.add(file);
+					namesList.add(file.name);
+					typesList.add(FOLDER);
+					sizesList.add(getFormattedFileSize(file.length));
+				} else {
+					String[] splits = file.name.split("\\.");
+					if (mFilterMap.containsKey("." + splits[splits.length - 1])) {
+						continue;
+					}
+					pathsList.add(file);
+					namesList.add(file.name);
+					String fileName = file.name;
+					//Add the file element to typesList based on the file type.
+					if (getFileExtension(fileName).equalsIgnoreCase("mp3") ||
+							getFileExtension(fileName).equalsIgnoreCase("3gp") ||
+							getFileExtension(fileName).equalsIgnoreCase("mp4") ||
+							getFileExtension(fileName).equalsIgnoreCase("m4a") ||
+							getFileExtension(fileName).equalsIgnoreCase("aac") ||
+							getFileExtension(fileName).equalsIgnoreCase("ts") ||
+							getFileExtension(fileName).equalsIgnoreCase("flac") ||
+							getFileExtension(fileName).equalsIgnoreCase("mid") ||
+							getFileExtension(fileName).equalsIgnoreCase("xmf") ||
+							getFileExtension(fileName).equalsIgnoreCase("mxmf") ||
+							getFileExtension(fileName).equalsIgnoreCase("midi") ||
+							getFileExtension(fileName).equalsIgnoreCase("rtttl") ||
+							getFileExtension(fileName).equalsIgnoreCase("rtx") ||
+							getFileExtension(fileName).equalsIgnoreCase("ota") ||
+							getFileExtension(fileName).equalsIgnoreCase("imy") ||
+							getFileExtension(fileName).equalsIgnoreCase("ogg") ||
+							getFileExtension(fileName).equalsIgnoreCase("mkv") ||
+							getFileExtension(fileName).equalsIgnoreCase("wav")) {
+
+						//The file is an audio file.
+						typesList.add(FILE_AUDIO);
+						sizesList.add("" + getFormattedFileSize(file.length));
+
+					} else if (getFileExtension(fileName).equalsIgnoreCase("jpg") ||
+							getFileExtension(fileName).equalsIgnoreCase("gif") ||
+							getFileExtension(fileName).equalsIgnoreCase("png") ||
+							getFileExtension(fileName).equalsIgnoreCase("bmp") ||
+							getFileExtension(fileName).equalsIgnoreCase("webp")) {
+
+						//The file is a picture file.
+						typesList.add(FILE_PICTURE);
+						sizesList.add("" + getFormattedFileSize(file.length));
+
+					} else if (getFileExtension(fileName).equalsIgnoreCase("3gp") ||
+							getFileExtension(fileName).equalsIgnoreCase("mp4") ||
+							getFileExtension(fileName).equalsIgnoreCase("3gp") ||
+							getFileExtension(fileName).equalsIgnoreCase("ts") ||
+							getFileExtension(fileName).equalsIgnoreCase("webm") ||
+							getFileExtension(fileName).equalsIgnoreCase("mkv")) {
+
+						//The file is a video file.
+						typesList.add(FILE_VIDEO);
+						sizesList.add("" + getFormattedFileSize(file.length));
+
 					} else {
-						String path = file.getCaption();
-						//Check if the file ends with an excluded extension.
-						String[] splits = path.split("\\.");
-						if (mFilterMap.containsKey("." + splits[splits.length - 1])) {
-							continue;
-						}
-						pathsList.add(file);
-						namesList.add(file.getName());
-						String fileName = file.getName();
-						//Add the file element to typesList based on the file type.
-						if (getFileExtension(fileName).equalsIgnoreCase("mp3") ||
-								getFileExtension(fileName).equalsIgnoreCase("3gp") ||
-								getFileExtension(fileName).equalsIgnoreCase("mp4") ||
-								getFileExtension(fileName).equalsIgnoreCase("m4a") ||
-								getFileExtension(fileName).equalsIgnoreCase("aac") ||
-								getFileExtension(fileName).equalsIgnoreCase("ts") ||
-								getFileExtension(fileName).equalsIgnoreCase("flac") ||
-								getFileExtension(fileName).equalsIgnoreCase("mid") ||
-								getFileExtension(fileName).equalsIgnoreCase("xmf") ||
-								getFileExtension(fileName).equalsIgnoreCase("mxmf") ||
-								getFileExtension(fileName).equalsIgnoreCase("midi") ||
-								getFileExtension(fileName).equalsIgnoreCase("rtttl") ||
-								getFileExtension(fileName).equalsIgnoreCase("rtx") ||
-								getFileExtension(fileName).equalsIgnoreCase("ota") ||
-								getFileExtension(fileName).equalsIgnoreCase("imy") ||
-								getFileExtension(fileName).equalsIgnoreCase("ogg") ||
-								getFileExtension(fileName).equalsIgnoreCase("mkv") ||
-								getFileExtension(fileName).equalsIgnoreCase("wav")) {
 
-							//The file is an audio file.
-							typesList.add(FILE_AUDIO);
-							sizesList.add("" + getFormattedFileSize(file.length()));
-
-						} else if (getFileExtension(fileName).equalsIgnoreCase("jpg") ||
-								getFileExtension(fileName).equalsIgnoreCase("gif") ||
-								getFileExtension(fileName).equalsIgnoreCase("png") ||
-								getFileExtension(fileName).equalsIgnoreCase("bmp") ||
-								getFileExtension(fileName).equalsIgnoreCase("webp")) {
-
-							//The file is a picture file.
-							typesList.add(FILE_PICTURE);
-							sizesList.add("" + getFormattedFileSize(file.length()));
-
-						} else if (getFileExtension(fileName).equalsIgnoreCase("3gp") ||
-								getFileExtension(fileName).equalsIgnoreCase("mp4") ||
-								getFileExtension(fileName).equalsIgnoreCase("3gp") ||
-								getFileExtension(fileName).equalsIgnoreCase("ts") ||
-								getFileExtension(fileName).equalsIgnoreCase("webm") ||
-								getFileExtension(fileName).equalsIgnoreCase("mkv")) {
-
-							//The file is a video file.
-							typesList.add(FILE_VIDEO);
-							sizesList.add("" + getFormattedFileSize(file.length()));
-
-						} else {
-
-							//We don't have an icon for this file type so give it the generic file flag.
-							typesList.add(FILE_GENERIC);
-							sizesList.add("" + getFormattedFileSize(file.length()));
-
-						}
+						//We don't have an icon for this file type so give it the generic file flag.
+						typesList.add(FILE_GENERIC);
+						sizesList.add("" + getFormattedFileSize(file.length));
 
 					}
 
 				}
 
 			}
-			callback.call(new AdapterData(namesList, typesList, pathsList, sizesList));
-			return null;
-		});
+
+		}
+		callback.call(new AdapterData(namesList, typesList, pathsList, sizesList));
 	}
 
 
-	public void openFile(DriveFile file) {
-
+	public void openFile(DriveFileEntity file, ActionCallback callback) {
+		downloadFile(file, callback);
 	}
 
 	/**
@@ -276,8 +276,57 @@ public class FileBrowserEngine {
 		return new DecimalFormat("#,##0.#").format(result) + " " + unit;
 	}
 
-	public DriveFile getCurrentDir() {
+	public DriveFileEntity getCurrentDir() {
 		return mCurrentDir;
 	}
 
+	public DriveFileEntity getParentFile(DriveFileEntity currentDir) {
+		return dao.getFile(currentDir.dirId);
+	}
+
+	public void uploadFile(File file, ActionCallback callback) {
+		if (file.isDirectory()) {
+			createDir(file.getName());
+			return;
+		}
+		client.uploadFile(file, o -> {
+			TdApi.UpdateMessageSendSucceeded message = (TdApi.UpdateMessageSendSucceeded) o;
+			TdApi.File tdFile = ((TdApi.MessageDocument)message.message.content).document.document;
+			String remoteId = tdFile.remote.id;
+			DriveFileEntity entity = dao.getRemoteFile(remoteId);
+			if (entity == null) {
+				entity = new DriveFileEntity();
+				entity.dirId = getCurrentDir().id;
+				entity.name = file.getName();
+				entity.remoteFileId = remoteId;
+				entity.length = tdFile.size;
+				entity.type = 1;
+				dao.insert(entity);
+				callback.call(entity);
+			}
+			return null;
+		});
+	}
+
+	public void downloadFile(DriveFileEntity entity, ActionCallback callback) {
+		if (entity.isFile()) {
+			client.downloadFile(entity.remoteFileId, callback);
+		} else {
+			LogUtils.log(TAG, "不支持下载文件夹");
+		}
+	}
+
+	public void createDir(String dirName) {
+		DriveFileEntity entity = new DriveFileEntity();
+		entity.dirId = getCurrentDir().id;
+		entity.name = dirName;
+		entity.type = 0;
+		dao.insert(entity);
+	}
+
+	public void refresh() {
+		List<DriveFileEntity> entities = dao.listAll();
+		LogUtils.printList(TAG, entities);
+		client.getDriveChat(null);
+	}
 }

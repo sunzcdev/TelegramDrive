@@ -21,7 +21,7 @@ public class App extends Application {
 		param.systemLanguageCode = "en";
 		param.deviceModel = "Android";
 		param.applicationVersion = "1.0";
-		client = TelegramClient.create(param);
+		client = TelegramClient.create(this, param);
 	}
 
 	public TelegramClient getClient() {

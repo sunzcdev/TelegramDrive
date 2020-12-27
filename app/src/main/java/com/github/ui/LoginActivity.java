@@ -2,6 +2,7 @@ package com.github.ui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,8 +14,12 @@ import com.github.drive.Callback;
 import com.github.telegram.ActionCallback;
 import com.github.telegram.AuthAction;
 import com.github.telegram.LoginListener;
+import com.github.telegram.TelegramClient;
 import com.github.telegramdrive.R;
 import com.github.utils.ViewUtils;
+import com.psaravan.filebrowserview.lib.Utils.Utils;
+
+import org.drinkless.td.libcore.telegram.TdApi;
 
 import androidx.annotation.Nullable;
 
@@ -79,17 +84,12 @@ public class LoginActivity extends Activity implements LoginListener {
 
 	@Override
 	public void onSuccess() {
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				((App) getApplication()).getClient().getDriveChat(new ActionCallback() {
-					@Override
-					public Void call(Object o) {
-						startActivity(new Intent(LoginActivity.this, FolderActivity.class));
-						return null;
-					}
-				});
-			}
+		runOnUiThread(() -> {
+			TelegramClient client = ((App) getApplication()).getClient();
+			client.getDriveChat(o -> {
+				startActivity(new Intent(LoginActivity.this, FolderActivity.class));
+				return null;
+			});
 		});
 	}
 
@@ -100,7 +100,7 @@ public class LoginActivity extends Activity implements LoginListener {
 
 	public void verifyPhone(View view) {
 		if (TextUtils.isEmpty(phoneEt.getText())) {
-			ViewUtils.toast(this, "请输入手机号");
+			Utils.toast(this, "请输入手机号");
 			return;
 		}
 		auth.SetAuthenticationPhoneNumber(phoneEt.getText().toString());
@@ -108,7 +108,7 @@ public class LoginActivity extends Activity implements LoginListener {
 
 	public void verifyCode(View view) {
 		if (TextUtils.isEmpty(verifyCodeEt.getText())) {
-			ViewUtils.toast(this, "请输入验证码");
+			Utils.toast(this, "请输入验证码");
 			return;
 		}
 		auth.CheckAuthenticationCode(verifyCodeEt.getText().toString());
@@ -116,7 +116,7 @@ public class LoginActivity extends Activity implements LoginListener {
 
 	public void verifyPassword(View view) {
 		if (TextUtils.isEmpty(passwordEt.getText())) {
-			ViewUtils.toast(this, "请输入密码");
+			Utils.toast(this, "请输入密码");
 			return;
 		}
 		auth.CheckAuthenticationPassword(passwordEt.getText().toString());

@@ -23,6 +23,7 @@ import android.widget.FrameLayout;
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 import com.psaravan.filebrowserview.lib.ListLayout.ListLayoutView;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 import org.drinkless.td.libcore.telegram.DriveFile;
 
@@ -219,7 +220,7 @@ public class FileBrowserView extends FrameLayout {
 		mFileBrowserLayout.showParentDir();
 	}
 
-	public DriveFile getCurrentDir() {
+	public DriveFileEntity getCurrentDir() {
 		return mFileBrowserEngine.getCurrentDir();
 	}
 

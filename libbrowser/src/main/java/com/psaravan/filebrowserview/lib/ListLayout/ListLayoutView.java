@@ -29,6 +29,7 @@ import com.psaravan.filebrowserview.lib.FileBrowserEngine.AdapterData;
 import com.psaravan.filebrowserview.lib.R;
 import com.psaravan.filebrowserview.lib.View.BaseLayoutView;
 import com.psaravan.filebrowserview.lib.View.FileBrowserView;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 import org.drinkless.td.libcore.telegram.DriveFile;
 
@@ -75,7 +76,7 @@ public class ListLayoutView extends BaseLayoutView {
 	 * @param directory The File object that points to the directory to load.
 	 */
 	@Override
-	public void showDir(DriveFile directory) {
+	public void showDir(DriveFileEntity directory) {
 		super.showDir(directory);
 		//Grab the directory's data to feed to the list adapter.
 		fileBrowserEngine.loadDir(directory, adapterData -> {
@@ -113,7 +114,7 @@ public class ListLayoutView extends BaseLayoutView {
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-			DriveFile file = null;
+			DriveFileEntity file = null;
 			try {
 				file = mFileBrowserView.getFileBrowserAdapter().getPathsList().get(position);
 				if (file.isFile()) {

@@ -6,8 +6,6 @@ import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MessageAction extends TelegramAction {
 	private final AuthAction authAction;
@@ -74,50 +72,68 @@ public class MessageAction extends TelegramAction {
 		list(userId, chatId, directory.listChildrenDirs(), callback);
 	}
 
-	private void sendFile(long chatId, int id, String captionText, ActionCallback callback) {
+	private void sendFile(long chatId, int id, ActionCallback callback) {
 		TdApi.InputFile inputFile1 = new TdApi.InputFileId(id);
-		TdApi.FormattedText caption = new TdApi.FormattedText(captionText, null);
-		TdApi.InputMessageContent content = new TdApi.InputMessageDocument(inputFile1, null, true, caption);
+		TdApi.InputMessageContent content = new TdApi.InputMessageDocument(inputFile1, null, true, null);
 		authAction.send(TdApi.Message.CONSTRUCTOR, new TdApi.SendMessage(chatId, 0, 0, null, null, content), callback);
 	}
 
-	public void UploadFile(long chatId, File file, DriveFile driveFile, ActionCallback callback) {
+	public void UploadFile(long chatId, File file, ActionCallback callback) {
 		TdApi.InputFile inputFile = new TdApi.InputFileLocal(file.getAbsolutePath());
 		TdApi.FileType fileType = new TdApi.FileTypeDocument();
 		authAction.send(TdApi.File.CONSTRUCTOR, null, o -> {
-			TdApi.File sendFile = (TdApi.File) o;
-			sendFile(chatId, sendFile.id, driveFile.getCaption(), new ActionCallback() {
-				@Override
-				public Void call(Object o) {
-					Log.i(TAG, "文件发送完成:"+o.toString());
-					return null;
-				}
-			});
+			TdApi.File file1 = (TdApi.File) o;
+			sendFile(chatId, file1.id, null);
 			return null;
 		});
+		authAction.send(TdApi.UpdateMessageSendSucceeded.CONSTRUCTOR, null, callback);
 		TdApi.UploadFile uploadFile = new TdApi.UploadFile(inputFile, fileType, 32);
-		authAction.send(TdApi.UpdateFile.CONSTRUCTOR, uploadFile, o -> {
+		authAction.send(TdApi.UploadFile.CONSTRUCTOR, uploadFile, o -> {
 			TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o;
 			Log.i(TAG, "upload--->>>" + ((float) updateFile.file.remote.uploadedSize / (float) updateFile.file.expectedSize));
 			if (updateFile.file.remote.isUploadingCompleted) {
 				Log.i(TAG, "上传完成");
-				callback.call(null);
 			}
 			return null;
 		});
 	}
 
-	public void DownloadFile(DriveFile file, ActionCallback callback) {
-		TdApi.MessageDocument content = ((TdApi.MessageDocument) file.getMessage().content);
-		TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(content.document.document.id, 32, 0, 0, false);
-		authAction.send(TdApi.UpdateFile.CONSTRUCTOR, downloadFile, o1 -> {
-			TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o1;
-			Log.i(TAG, "download--->>>" + ((float) updateFile.file.local.downloadedSize / (float) updateFile.file.expectedSize));
-			if (updateFile.file.local.isDownloadingCompleted) {
-				callback.call(updateFile);
-			}
+	public void GetRemoteFile(String remoteId, ActionCallback callback) {
+		TdApi.FileType type = new TdApi.FileTypeDocument();
+		TdApi.GetRemoteFile remoteFile = new TdApi.GetRemoteFile(remoteId, type);
+		authAction.send(TdApi.File.CONSTRUCTOR, remoteFile, callback);
+	}
+
+	public void DownloadFile(String remoteId, ActionCallback callback) {
+		GetRemoteFile(remoteId, o -> {
+			TdApi.File file = (TdApi.File) o;
+			TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(file.id, 32, 0, 0, false);
+			authAction.send(TdApi.UpdateFile.CONSTRUCTOR, downloadFile, o1 -> {
+				TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o1;
+				Log.i(TAG, "download--->>>" + ((float) updateFile.file.local.downloadedSize / (float) updateFile.file.expectedSize));
+				if (updateFile.file.local.isDownloadingCompleted) {
+					callback.call(updateFile);
+					return null;
+				}
+				return null;
+			});
 			return null;
 		});
 	}
 
+
+	private int getFileId(TdApi.MessageContent content) {
+		if (content instanceof TdApi.MessageDocument) {
+			return ((TdApi.MessageDocument) content).document.document.id;
+		} else if (content instanceof TdApi.MessagePhoto) {
+			return ((TdApi.MessagePhoto) content).photo.sizes[0].photo.id;
+		} else if (content instanceof TdApi.MessageVideo) {
+			return ((TdApi.MessageVideo) content).video.video.id;
+		} else if (content instanceof TdApi.MessageAnimation) {
+			return ((TdApi.MessageAnimation) content).animation.animation.id;
+		} else if (content instanceof TdApi.MessageAudio) {
+			return ((TdApi.MessageAudio) content).audio.audio.id;
+		}
+		return -1;
+	}
 }

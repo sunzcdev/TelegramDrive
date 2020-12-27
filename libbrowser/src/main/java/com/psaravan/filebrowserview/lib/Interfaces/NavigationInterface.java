@@ -15,9 +15,7 @@
  */
 package com.psaravan.filebrowserview.lib.Interfaces;
 
-import org.drinkless.td.libcore.telegram.DriveFile;
-
-import java.io.File;
+import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
 /**
  * Interface that provides callbacks for navigation events, such as
@@ -30,17 +28,17 @@ public interface NavigationInterface {
     /**
      * Called when a new directory is opened by the user.
      *
-     * @param dirFile The file that points to the new directory
+     * @param dirFileId The file that points to the new directory
      *                that has just been loaded.
      */
-    public void onNewDirLoaded(DriveFile dirFile);
+    public void onNewDirLoaded(DriveFileEntity dirFileId);
 
     /**
      * Called when a new file is opened by the user.
      *
      * @param file The file that was just opened.
      */
-    public void onFileOpened(DriveFile file);
+    public void onFileOpened(DriveFileEntity file);
 
     /**
      * Called when the user navigates back to the parent directory.
@@ -48,13 +46,13 @@ public interface NavigationInterface {
      * @param dirFile The file that points to the parent directory that
      *                was just opened.
      */
-    public void onParentDirLoaded(DriveFile dirFile);
+    public void onParentDirLoaded(DriveFileEntity dirFile);
 
     /**
      * Called when a file or folder fails to open.
      *
      * @param file The file/folder that failed to open.
      */
-    public void onFileFolderOpenFailed(DriveFile file);
+    public void onFileFolderOpenFailed(DriveFileEntity file);
 
 }
