@@ -1,25 +1,13 @@
 package com.github.telegram;
 
 import android.util.Log;
-import android.util.SparseArray;
-import android.util.SparseIntArray;
 
 import com.github.drive.Callback;
 
-import org.drinkless.td.libcore.telegram.Client;
-import org.drinkless.td.libcore.telegram.TdApi;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public abstract class TelegramAction implements Client.ResultHandler {
+public abstract class TelegramAction {
 	private final String TAG = this.getClass().getSimpleName();
 	private Callback<String, Void> logListener;
 	private Callback<DialogInfo, Void> inputListener;
-
-	@Override
-	public void onResult(TdApi.Object object) {
-	}
 
 	protected void log(String msg) {
 		Log.i(TAG, msg);

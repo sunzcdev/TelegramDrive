@@ -14,7 +14,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.github.App;
-import com.github.demo.DemoActivity;
+import com.github.telegram.ActionCallback;
 import com.github.telegram.TelegramClient;
 import com.github.telegramdrive.R;
 import com.github.utils.ViewUtils;
@@ -121,9 +121,11 @@ public class FolderActivity extends AppCompatActivity {
 	}
 
 	private void upload(File file) {
-		engine.uploadFile(file, o -> {
-			mFileBrowserView.showCurrentDir();
-			return null;
+		engine.uploadFile(file, new ActionCallback<DriveFileEntity>() {
+			@Override
+			public void toObject(DriveFileEntity entity) {
+				mFileBrowserView.showCurrentDir();
+			}
 		});
 	}
 
@@ -132,12 +134,7 @@ public class FolderActivity extends AppCompatActivity {
 		@Override
 		public void onNewDirLoaded(DriveFileEntity dirFile) {
 			//Update the action bar title.
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					setTitle(dirFile.name);
-				}
-			});
+			runOnUiThread(() -> setTitle(dirFile.name));
 		}
 
 		@Override

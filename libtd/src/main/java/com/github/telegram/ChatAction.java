@@ -10,31 +10,31 @@ public class ChatAction extends TelegramAction {
 		this.authAction = authAction;
 	}
 
-	public void CreatePrivateChat(ActionCallback callback) {
-		authAction.send(TdApi.Chat.CONSTRUCTOR, new TdApi.CreatePrivateChat(402780, true), callback);
+	public void CreatePrivateChat(ActionCallback<TdApi.Chat> callback) {
+		authAction.send(new TdApi.CreatePrivateChat(402780, true), callback);
 	}
 
-	public void GetChats(ActionCallback callback) {
-		authAction.send(TdApi.Chats.CONSTRUCTOR, new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, 100), callback);
+	public void GetChats(ActionCallback<TdApi.Chats> callback) {
+		authAction.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, 100), callback);
 	}
 
-	public void SearchChat(String query, ActionCallback callback) {
-		authAction.send(TdApi.Chats.CONSTRUCTOR, new TdApi.SearchChats(query, 1), callback);
+	public void SearchChat(String query, ActionCallback<TdApi.Chats> callback) {
+		authAction.send(new TdApi.SearchChats(query, 1), callback);
 	}
 
-	public void GetChat(long chatId, ActionCallback callback) {
-		authAction.send(TdApi.Chat.CONSTRUCTOR, new TdApi.GetChat(chatId), callback);
+	public void GetChat(long chatId, ActionCallback<TdApi.Chat> callback) {
+		authAction.send(new TdApi.GetChat(chatId), callback);
 	}
 
-	public void OpenChat(long chatId, ActionCallback callback) {
-		authAction.send(TdApi.Ok.CONSTRUCTOR, new TdApi.OpenChat(chatId), callback);
+	public void OpenChat(long chatId, ActionCallback<TdApi.Ok> callback) {
+		authAction.send(new TdApi.OpenChat(chatId), callback);
 	}
-	public void CloseChat(long chatId, ActionCallback callback) {
-		authAction.send(TdApi.Ok.CONSTRUCTOR, new TdApi.CloseChat(chatId), callback);
+	public void CloseChat(long chatId, ActionCallback<TdApi.Ok> callback) {
+		authAction.send(new TdApi.CloseChat(chatId), callback);
 	}
 
-	public void getChatHistory(ActionCallback callback) {
-		authAction.send(TdApi.Messages.CONSTRUCTOR, new TdApi.GetChatHistory(777000, 0, 0, 10, false), callback);
+	public void getChatHistory(ActionCallback<TdApi.Messages> callback) {
+		authAction.send(new TdApi.GetChatHistory(777000, 0, 0, 10, false), callback);
 	}
 
 }

@@ -39,65 +39,79 @@ public class TelegramClient {
 		}
 	}
 
-	public void getDriveChat(ActionCallback callback) {
+	public void login() {
+		auth.create();
+	}
+
+	public void SetAuthenticationPhoneNumber(String phoneNumber) {
+		auth.SetAuthenticationPhoneNumber(phoneNumber);
+	}
+
+	public void CheckAuthenticationCode(String code) {
+		auth.CheckAuthenticationCode(code);
+	}
+
+	public void CheckAuthenticationPassword(String password) {
+		auth.CheckAuthenticationPassword(password);
+	}
+
+	public void getDriveChat(ActionCallback<TdApi.Ok> callback) {
 //		if (chatId != -1) {
 //			chat.OpenChat(chatId, callback);
 //			return;
 //		}
-		chat.GetChats(o -> {
-			TdApi.Chats chats = (TdApi.Chats) o;
-			if (chats.totalCount > 0) {
-				chat.SearchChat("Telegram drive", o1 -> {
-					TdApi.Chats chats1 = (TdApi.Chats) o1;
-					if (chats1.totalCount > 0) {
-						chat.GetChat(chats1.chatIds[0], o2 -> {
-							TdApi.Chat currentChat = (TdApi.Chat) o2;
-							chatId = currentChat.id;
-							SharedPreferences.Editor editor = sp.edit();
-							editor.putLong("chat_id", chatId);
-							editor.apply();
-							chat.OpenChat(chatId, callback);
-							return null;
-						});
-					}
-					return null;
-				});
-			}
-			return null;
-		});
-	}
-
-	public void uploadFile(File localFile, ActionCallback callback) {
-		chat.OpenChat(chatId, o -> {
-			message.UploadFile(chatId, localFile, o12 -> {
-				chat.CloseChat(chatId, o1 -> {
-					if (callback != null)
-						callback.call(o12);
-					return null;
-				});
-				return null;
-			});
-			return null;
-		});
-	}
-
-	public void downloadFile(String remoteId, ActionCallback callback) {
-		chat.OpenChat(chatId, o -> {
-			message.DownloadFile(remoteId, new ActionCallback() {
-				@Override
-				public Boolean call(Object o) {
-					chat.CloseChat(chatId, new ActionCallback() {
+		chat.GetChats(new ActionCallback<TdApi.Chats>() {
+			@Override
+			public void toObject(TdApi.Chats chats) {
+				if (chats.totalCount > 0) {
+					chat.SearchChat("Telegram drive", new ActionCallback<TdApi.Chats>() {
 						@Override
-						public Boolean call(Object o1) {
-							if (callback != null)
-								callback.call(o);
-							return null;
+						public void toObject(TdApi.Chats chats1) {
+							if (chats1.totalCount > 0) {
+								chat.GetChat(chats1.chatIds[0], new ActionCallback<TdApi.Chat>() {
+									@Override
+									public void toObject(TdApi.Chat currentChat) {
+										chatId = currentChat.id;
+										SharedPreferences.Editor editor = sp.edit();
+										editor.putLong("chat_id", chatId);
+										editor.apply();
+										chat.OpenChat(chatId, callback);
+									}
+								});
+							}
 						}
 					});
-					return null;
 				}
-			});
-			return null;
+			}
+		});
+	}
+
+	public void uploadFile(File localFile, ActionCallback<TdApi.UpdateFile> callback) {
+		chat.OpenChat(chatId, new ActionCallback<TdApi.Ok>() {
+			@Override
+			public void toObject(TdApi.Ok ok) {
+				message.UploadFile(chatId, localFile, new ActionCallback<TdApi.UpdateFile>() {
+					@Override
+					public void toObject(TdApi.UpdateFile updateFile) {
+						chat.CloseChat(chatId, new ActionCallback<TdApi.Ok>() {
+							@Override
+							public void toObject(TdApi.Ok ok) {
+								callback.toObject(updateFile);
+							}
+						});
+					}
+				});
+			}
+		});
+	}
+
+	public void downloadFile(String remoteId, ActionCallback<TdApi.UpdateFile> callback) {
+		message.DownloadFile(remoteId, new ActionCallback<TdApi.UpdateFile>() {
+			@Override
+			public void toObject(TdApi.UpdateFile updateFile) {
+				if (callback != null)
+					callback.toObject(updateFile);
+			}
 		});
 	}
 
@@ -107,8 +121,11 @@ public class TelegramClient {
 	public void copyDir(DriveFile dir, DriveFile destDir) {
 	}
 
-	public void delete(DriveFile file, ActionCallback callback) {
+	public void delete(DriveFile file, ActionCallback<TdApi.Ok> callback) {
 		message.DeleteMessages(chatId, new DriveFile[]{file}, callback);
 	}
 
+	public void setLoginListener(LoginListener loginListener) {
+		auth.setLoginListener(loginListener);
+	}
 }

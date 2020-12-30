@@ -1,7 +1,5 @@
 package com.github.telegram;
 
-import android.util.Log;
-
 import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
@@ -15,34 +13,30 @@ public class MessageAction extends TelegramAction {
 		this.authAction = authAction;
 	}
 
-	public void CreateDirectory(long chatId, String captionText, ActionCallback callback) {
+	public void CreateDirectory(long chatId, String captionText, ActionCallback<TdApi.Message> callback) {
 		TdApi.FormattedText text = new TdApi.FormattedText(captionText, null);
 		TdApi.InputMessageContent content = new TdApi.InputMessageText(text, false, true);
 		TdApi.MessageSendOptions options = new TdApi.MessageSendOptions();
 		TdApi.SendMessage sendMsg = new TdApi.SendMessage(chatId, 0, 0, options, null, content);
-		authAction.send(TdApi.Message.CONSTRUCTOR, sendMsg, callback);
+		authAction.send(sendMsg, callback);
 	}
 
-	public void EditDir(long chatId, String oldCaptionText, String captionText, ActionCallback callback) {
-
-	}
-
-	public void EditFile(long chatId, DriveFile file, ActionCallback callback) {
+	public void EditFile(long chatId, DriveFile file, ActionCallback<TdApi.Message> callback) {
 		TdApi.FormattedText text = new TdApi.FormattedText(file.getCaption(), null);
 		TdApi.EditMessageCaption sendMsg = new TdApi.EditMessageCaption(chatId, file.getId(), null, text);
-		authAction.send(TdApi.Message.CONSTRUCTOR, sendMsg, callback);
+		authAction.send(sendMsg, callback);
 	}
 
-	public void DeleteMessages(long chatId, DriveFile[] files, ActionCallback callback) {
+	public void DeleteMessages(long chatId, DriveFile[] files, ActionCallback<TdApi.Ok> callback) {
 		long[] messageIds = new long[files.length];
 		for (int i = 0; i < files.length; i++) {
 			messageIds[i] = files[i].getId();
 		}
 		TdApi.DeleteMessages sendMsg = new TdApi.DeleteMessages(chatId, messageIds, true);
-		authAction.send(TdApi.Ok.CONSTRUCTOR, sendMsg, callback);
+		authAction.send(sendMsg, callback);
 	}
 
-	private void listLast(long chatId, ActionCallback callback) {
+	private void listLast(long chatId, ActionCallback<TdApi.Message> callback) {
 //		TdApi.UpdateChatLastMessage function = new TdApi.GetChat(chatId);
 //		authAction.send(TdApi.Chat.CONSTRUCTOR, function, new ActionCallback() {
 //			@Override
@@ -53,71 +47,92 @@ public class MessageAction extends TelegramAction {
 //		});
 	}
 
-	private void list(int userId, long chatId, String query, ActionCallback callback) {
+	private void list(int userId, long chatId, String query, ActionCallback<TdApi.Message> callback) {
 		TdApi.SearchMessagesFilterEmpty filter = new TdApi.SearchMessagesFilterEmpty();
 		TdApi.MessageSender sender = new TdApi.MessageSenderUser(userId);
 		TdApi.SearchChatMessages function = new TdApi.SearchChatMessages(chatId, query, sender, 0, 0, 100, filter, 0);
-		authAction.send(TdApi.Messages.CONSTRUCTOR, function, callback);
+		authAction.send(function, callback);
 	}
 
-	public void listAll(int userId, long chatId, DriveFile directory, ActionCallback callback) {
+	public void listAll(int userId, long chatId, DriveFile directory, ActionCallback<TdApi.Message> callback) {
 		list(userId, chatId, directory.listAllChildren(), callback);
 	}
 
-	public void listFile(int userId, long chatId, DriveFile directory, ActionCallback callback) {
+	public void listFile(int userId, long chatId, DriveFile directory, ActionCallback<TdApi.Message> callback) {
 		list(userId, chatId, directory.listChildrenFiles(), callback);
 	}
 
-	public void listDir(int userId, long chatId, DriveFile directory, ActionCallback callback) {
+	public void listDir(int userId, long chatId, DriveFile directory, ActionCallback<TdApi.Message> callback) {
 		list(userId, chatId, directory.listChildrenDirs(), callback);
 	}
 
-	private void sendFile(long chatId, int id, ActionCallback callback) {
+	private void sendFile(long chatId, int id, ActionCallback<TdApi.Message> callback) {
 		TdApi.InputFile inputFile1 = new TdApi.InputFileId(id);
 		TdApi.InputMessageContent content = new TdApi.InputMessageDocument(inputFile1, null, true, null);
-		authAction.send(TdApi.Message.CONSTRUCTOR, new TdApi.SendMessage(chatId, 0, 0, null, null, content), callback);
+		authAction.send(new TdApi.SendMessage(chatId, 0, 0, null, null, content), callback);
 	}
 
-	public void UploadFile(long chatId, File file, ActionCallback callback) {
-		TdApi.InputFile inputFile = new TdApi.InputFileLocal(file.getAbsolutePath());
+	public void UploadFile(long chatId, File localFile, ActionCallback<TdApi.UpdateFile> callback) {
+		TdApi.InputFile inputFile = new TdApi.InputFileLocal(localFile.getAbsolutePath());
 		TdApi.FileType fileType = new TdApi.FileTypeDocument();
-		authAction.send(TdApi.File.CONSTRUCTOR, null, o -> {
-			TdApi.File file1 = (TdApi.File) o;
-			sendFile(chatId, file1.id, null);
-			return null;
-		});
-		authAction.send(TdApi.UpdateMessageSendSucceeded.CONSTRUCTOR, null, callback);
 		TdApi.UploadFile uploadFile = new TdApi.UploadFile(inputFile, fileType, 32);
-		authAction.send(TdApi.UploadFile.CONSTRUCTOR, uploadFile, o -> {
-			TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o;
-			Log.i(TAG, "upload--->>>" + ((float) updateFile.file.remote.uploadedSize / (float) updateFile.file.expectedSize));
-			if (updateFile.file.remote.isUploadingCompleted) {
-				Log.i(TAG, "上传完成");
+		authAction.send(uploadFile, new ActionCallback<TdApi.File>() {
+			@Override
+			public void toObject(TdApi.File file) {
+				authAction.registerUpdateListener(new ActionCallback<TdApi.Update>() {
+					@Override
+					public void toObject(TdApi.Update update) {
+						if (update instanceof TdApi.UpdateFile) {
+							TdApi.RemoteFile remoteFile = ((TdApi.UpdateFile) update).file.remote;
+							TdApi.File localFile = ((TdApi.UpdateFile) update).file;
+							if (file.id == localFile.id && remoteFile.isUploadingCompleted) {
+								authAction.unregisterUpdateListener(this);
+								callback.toObject((TdApi.UpdateFile) update);
+							}
+						}
+					}
+				});
+				sendFile(chatId, file.id, new ActionCallback<TdApi.Message>() {
+					@Override
+					public void toObject(TdApi.Message message) {
+
+					}
+				});
 			}
-			return null;
 		});
 	}
 
-	public void GetRemoteFile(String remoteId, ActionCallback callback) {
+	public void GetRemoteFile(String remoteId, ActionCallback<TdApi.File> callback) {
 		TdApi.FileType type = new TdApi.FileTypeDocument();
 		TdApi.GetRemoteFile remoteFile = new TdApi.GetRemoteFile(remoteId, type);
-		authAction.send(TdApi.File.CONSTRUCTOR, remoteFile, callback);
+		authAction.send(remoteFile, callback);
 	}
 
-	public void DownloadFile(String remoteId, ActionCallback callback) {
-		GetRemoteFile(remoteId, o -> {
-			TdApi.File file = (TdApi.File) o;
-			TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(file.id, 32, 0, 0, false);
-			authAction.send(TdApi.UpdateFile.CONSTRUCTOR, downloadFile, o1 -> {
-				TdApi.UpdateFile updateFile = (TdApi.UpdateFile) o1;
-				Log.i(TAG, "download--->>>" + ((float) updateFile.file.local.downloadedSize / (float) updateFile.file.expectedSize));
-				if (updateFile.file.local.isDownloadingCompleted) {
-					callback.call(updateFile);
-					return null;
-				}
-				return null;
-			});
-			return null;
+	public void DownloadFile(String remoteId, ActionCallback<TdApi.UpdateFile> callback) {
+		GetRemoteFile(remoteId, new ActionCallback<TdApi.File>() {
+			@Override
+			public void toObject(TdApi.File file) {
+				TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(file.id, 32, 0, 0, false);
+				authAction.registerUpdateListener(new ActionCallback<TdApi.Update>() {
+					@Override
+					public void toObject(TdApi.Update update) {
+						if (update instanceof TdApi.UpdateFile) {
+							TdApi.RemoteFile remoteFile = ((TdApi.UpdateFile) update).file.remote;
+							TdApi.LocalFile localFile = ((TdApi.UpdateFile) update).file.local;
+							if (remoteId.equals(remoteFile.id) && localFile.isDownloadingCompleted) {
+								authAction.registerUpdateListener(this);
+								callback.toObject((TdApi.UpdateFile) update);
+							}
+						}
+					}
+				});
+				authAction.send(downloadFile, new ActionCallback<TdApi.File>() {
+					@Override
+					public void toObject(TdApi.File file) {
+
+					}
+				});
+			}
 		});
 	}
 

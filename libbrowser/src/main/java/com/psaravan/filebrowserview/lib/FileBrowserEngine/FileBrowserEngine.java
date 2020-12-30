@@ -219,7 +219,7 @@ public class FileBrowserEngine {
 	}
 
 
-	public void openFile(DriveFileEntity file, ActionCallback callback) {
+	public void openFile(DriveFileEntity file, ActionCallback<TdApi.UpdateFile> callback) {
 		downloadFile(file, callback);
 	}
 
@@ -284,31 +284,32 @@ public class FileBrowserEngine {
 		return dao.getFile(currentDir.dirId);
 	}
 
-	public void uploadFile(File file, ActionCallback callback) {
+	public void uploadFile(File file, ActionCallback<DriveFileEntity> callback) {
 		if (file.isDirectory()) {
 			createDir(file.getName());
 			return;
 		}
-		client.uploadFile(file, o -> {
-			TdApi.UpdateMessageSendSucceeded message = (TdApi.UpdateMessageSendSucceeded) o;
-			TdApi.File tdFile = ((TdApi.MessageDocument)message.message.content).document.document;
-			String remoteId = tdFile.remote.id;
-			DriveFileEntity entity = dao.getRemoteFile(remoteId);
-			if (entity == null) {
-				entity = new DriveFileEntity();
-				entity.dirId = getCurrentDir().id;
-				entity.name = file.getName();
-				entity.remoteFileId = remoteId;
-				entity.length = tdFile.size;
-				entity.type = 1;
-				dao.insert(entity);
-				callback.call(entity);
+		client.uploadFile(file, new ActionCallback<TdApi.UpdateFile>() {
+			@Override
+			public void toObject(TdApi.UpdateFile updateFile) {
+				TdApi.File tdFile = updateFile.file;
+				String remoteId = tdFile.remote.id;
+				DriveFileEntity entity = dao.getRemoteFile(remoteId);
+				if (entity == null) {
+					entity = new DriveFileEntity();
+					entity.dirId = getCurrentDir().id;
+					entity.name = file.getName();
+					entity.remoteFileId = remoteId;
+					entity.length = tdFile.size;
+					entity.type = 1;
+					dao.insert(entity);
+					callback.toObject(entity);
+				}
 			}
-			return null;
 		});
 	}
 
-	public void downloadFile(DriveFileEntity entity, ActionCallback callback) {
+	public void downloadFile(DriveFileEntity entity, ActionCallback<TdApi.UpdateFile> callback) {
 		if (entity.isFile()) {
 			client.downloadFile(entity.remoteFileId, callback);
 		} else {

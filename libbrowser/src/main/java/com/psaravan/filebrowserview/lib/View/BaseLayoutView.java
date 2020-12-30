@@ -25,9 +25,7 @@ import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
-import org.drinkless.td.libcore.telegram.DriveFile;
-
-import java.io.File;
+import org.drinkless.td.libcore.telegram.TdApi;
 
 public abstract class BaseLayoutView extends View {
 
@@ -84,10 +82,12 @@ public abstract class BaseLayoutView extends View {
 	 * @param file 需要打开的文件
 	 */
 	public void openFile(DriveFileEntity file) {
-		fileBrowserEngine.openFile(file, o -> {
-			if (mNavigationInterface != null)
-				mNavigationInterface.onFileOpened(file);
-			return null;
+		fileBrowserEngine.openFile(file, new ActionCallback<TdApi.UpdateFile>() {
+			@Override
+			public void toObject(TdApi.UpdateFile o) {
+				if (mNavigationInterface != null)
+					mNavigationInterface.onFileOpened(file);
+			}
 		});
 	}
 
