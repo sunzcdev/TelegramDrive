@@ -20,7 +20,6 @@ import com.github.telegramdrive.R;
 import com.github.utils.ViewUtils;
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
-import com.psaravan.filebrowserview.lib.Utils.Utils;
 import com.psaravan.filebrowserview.lib.View.FileBrowserView;
 import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
@@ -138,8 +137,8 @@ public class FolderActivity extends AppCompatActivity {
 		}
 
 		@Override
-		public void onFileOpened(DriveFileEntity file) {
-			Utils.toast(FolderActivity.this, file.name + "下载完成");
+		public void onFileOpened(File file) {
+
 		}
 
 		@Override

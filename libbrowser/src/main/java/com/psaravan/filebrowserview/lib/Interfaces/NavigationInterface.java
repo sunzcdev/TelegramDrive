@@ -17,6 +17,8 @@ package com.psaravan.filebrowserview.lib.Interfaces;
 
 import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
+import java.io.File;
+
 /**
  * Interface that provides callbacks for navigation events, such as
  * browsing into a new directory, opening a file, etc.
@@ -38,7 +40,7 @@ public interface NavigationInterface {
      *
      * @param file The file that was just opened.
      */
-    public void onFileOpened(DriveFileEntity file);
+    public void onFileOpened(File file);
 
     /**
      * Called when the user navigates back to the parent directory.

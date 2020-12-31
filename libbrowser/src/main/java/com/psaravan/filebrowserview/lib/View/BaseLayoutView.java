@@ -20,12 +20,13 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AbsListView;
 
-import com.github.telegram.ActionCallback;
+import com.github.telegram.ProgressListener;
+import com.github.telegram.ViewUtils;
 import com.psaravan.filebrowserview.lib.FileBrowserEngine.FileBrowserEngine;
 import com.psaravan.filebrowserview.lib.Interfaces.NavigationInterface;
 import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 
-import org.drinkless.td.libcore.telegram.TdApi;
+import java.io.File;
 
 public abstract class BaseLayoutView extends View {
 
@@ -82,11 +83,22 @@ public abstract class BaseLayoutView extends View {
 	 * @param file 需要打开的文件
 	 */
 	public void openFile(DriveFileEntity file) {
-		fileBrowserEngine.openFile(file, new ActionCallback<TdApi.UpdateFile>() {
+		fileBrowserEngine.openFile(file, new ProgressListener<File, File>() {
 			@Override
-			public void toObject(TdApi.UpdateFile o) {
+			public void onStart(File file) {
+				ViewUtils.toast(mContext, file.getName() + " 开始下载");
+			}
+
+			@Override
+			public void onProgress(float progress) {
+				ViewUtils.toast(mContext, "下载中" + (int)(progress * 100) + "%");
+			}
+
+			@Override
+			public void onStop(File localFile) {
+				ViewUtils.toast(mContext, "下载完成:" + localFile.getAbsolutePath());
 				if (mNavigationInterface != null)
-					mNavigationInterface.onFileOpened(file);
+					mNavigationInterface.onFileOpened(localFile);
 			}
 		});
 	}

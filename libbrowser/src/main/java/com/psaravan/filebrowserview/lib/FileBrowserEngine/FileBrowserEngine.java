@@ -19,13 +19,12 @@ import android.content.Context;
 
 import com.github.drive.Callback;
 import com.github.telegram.ActionCallback;
+import com.github.telegram.ProgressListener;
 import com.github.telegram.TelegramClient;
 import com.github.utils.LogUtils;
 import com.psaravan.filebrowserview.lib.db.DriveDBManager;
 import com.psaravan.filebrowserview.lib.db.DriveFileEntity;
 import com.psaravan.filebrowserview.lib.db.FileBrowserDao;
-
-import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -219,7 +218,7 @@ public class FileBrowserEngine {
 	}
 
 
-	public void openFile(DriveFileEntity file, ActionCallback<TdApi.UpdateFile> callback) {
+	public void openFile(DriveFileEntity file, ProgressListener<File, File> callback) {
 		downloadFile(file, callback);
 	}
 
@@ -289,18 +288,16 @@ public class FileBrowserEngine {
 			createDir(file.getName());
 			return;
 		}
-		client.uploadFile(file, new ActionCallback<TdApi.UpdateFile>() {
+		client.uploadFile(file, new ActionCallback<String>() {
 			@Override
-			public void toObject(TdApi.UpdateFile updateFile) {
-				TdApi.File tdFile = updateFile.file;
-				String remoteId = tdFile.remote.id;
-				DriveFileEntity entity = dao.getRemoteFile(remoteId);
+			public void toObject(String caption) {
+				DriveFileEntity entity = dao.getRemoteFile(caption);
 				if (entity == null) {
 					entity = new DriveFileEntity();
 					entity.dirId = getCurrentDir().id;
 					entity.name = file.getName();
-					entity.remoteFileId = remoteId;
-					entity.length = tdFile.size;
+					entity.remoteFileId = caption;
+					entity.length = file.length();
 					entity.type = 1;
 					dao.insert(entity);
 					callback.toObject(entity);
@@ -309,7 +306,7 @@ public class FileBrowserEngine {
 		});
 	}
 
-	public void downloadFile(DriveFileEntity entity, ActionCallback<TdApi.UpdateFile> callback) {
+	public void downloadFile(DriveFileEntity entity, ProgressListener<File, File> callback) {
 		if (entity.isFile()) {
 			client.downloadFile(entity.remoteFileId, callback);
 		} else {

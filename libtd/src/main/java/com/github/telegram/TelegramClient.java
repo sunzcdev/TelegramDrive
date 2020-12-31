@@ -18,8 +18,10 @@ public class TelegramClient {
 	public final MessageAction message;
 	private final SharedPreferences sp;
 	private long chatId;
+	private Context context;
 
 	public TelegramClient(Context context, TdApi.TdlibParameters parameters) {
+		this.context = context;
 		sp = context.getSharedPreferences("tel_drive", MODE_PRIVATE);
 		if (sp.contains("chat_id")) {
 			chatId = sp.getLong("chat_id", -1);
@@ -86,17 +88,29 @@ public class TelegramClient {
 		});
 	}
 
-	public void uploadFile(File localFile, ActionCallback<TdApi.UpdateFile> callback) {
+	public void uploadFile(File localFile, ActionCallback<String> callback) {
 		chat.OpenChat(chatId, new ActionCallback<TdApi.Ok>() {
 			@Override
 			public void toObject(TdApi.Ok ok) {
-				message.UploadFile(chatId, localFile, new ActionCallback<TdApi.UpdateFile>() {
+				String caption = System.currentTimeMillis() + "";
+				message.UploadFile(chatId, localFile, caption, new ProgressListener<TdApi.Message, TdApi.RemoteFile>() {
 					@Override
-					public void toObject(TdApi.UpdateFile updateFile) {
+					public void onStart(TdApi.Message message) {
+						ViewUtils.toast(context, localFile.getName() + "开始上传");
+					}
+
+					@Override
+					public void onProgress(float progress) {
+						ViewUtils.toast(context, localFile.getName() + " 上传进度:" + (int) (progress * 100) + "%");
+					}
+
+					@Override
+					public void onStop(TdApi.RemoteFile remoteFile) {
+						ViewUtils.toast(context, localFile.getName() + " 上传完成");
 						chat.CloseChat(chatId, new ActionCallback<TdApi.Ok>() {
 							@Override
 							public void toObject(TdApi.Ok ok) {
-								callback.toObject(updateFile);
+								callback.toObject(caption);
 							}
 						});
 					}
@@ -105,14 +119,8 @@ public class TelegramClient {
 		});
 	}
 
-	public void downloadFile(String remoteId, ActionCallback<TdApi.UpdateFile> callback) {
-		message.DownloadFile(remoteId, new ActionCallback<TdApi.UpdateFile>() {
-			@Override
-			public void toObject(TdApi.UpdateFile updateFile) {
-				if (callback != null)
-					callback.toObject(updateFile);
-			}
-		});
+	public void downloadFile(String remoteId, ProgressListener<File, File> callback) {
+		message.DownloadFile(chatId, remoteId, callback);
 	}
 
 	public void copy(DriveFile file, DriveFile destDir) {
