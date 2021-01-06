@@ -9,18 +9,7 @@ public class UserAction extends TelegramAction {
 		this.authAction = authAction;
 	}
 
-	public void GetMe(ActionCallback callback) {
-		authAction.send(TdApi.User.CONSTRUCTOR, new TdApi.GetMe(), callback);
-	}
-
-	@Override
-	public void onResult(TdApi.Object object) {
-		super.onResult(object);
-		switch (object.getConstructor()) {
-			case TdApi.User.CONSTRUCTOR:
-				TdApi.User user = (TdApi.User) object;
-				show("我的id为:" + user.id);
-				break;
-		}
+	public void GetMe(ActionCallback<TdApi.User> callback) {
+		authAction.send(new TdApi.GetMe(), callback);
 	}
 }

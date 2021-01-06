@@ -89,11 +89,10 @@ public class FolderActivity extends AppCompatActivity {
 	}
 
 	private void upload(File file) {
-		client.uploadFile(file, mFileBrowserView.getCurrentDir(), new ActionCallback() {
+		client.uploadFile(file, mFileBrowserView.getCurrentDir(), new ActionCallback<String>() {
 			@Override
-			public Void call(Object o) {
+			public void toObject(String s) {
 				mFileBrowserView.showCurrentDir();
-				return null;
 			}
 		});
 	}

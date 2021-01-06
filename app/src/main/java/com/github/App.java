@@ -17,6 +17,9 @@ public class App extends Application {
 		param.apiHash = "084b977efa432bfbb24a745a1b9ac913";
 		param.filesDirectory = getExternalFilesDir("file").getAbsolutePath();
 		param.databaseDirectory = getExternalFilesDir("db").getAbsolutePath();
+		param.useFileDatabase = true;
+		param.useChatInfoDatabase = true;
+		param.useMessageDatabase = true;
 		param.useTestDc = false;
 		param.systemLanguageCode = "en";
 		param.deviceModel = "Android";

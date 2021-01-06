@@ -16,6 +16,8 @@ import com.github.telegram.LoginListener;
 import com.github.telegramdrive.R;
 import com.github.utils.ViewUtils;
 
+import org.drinkless.td.libcore.telegram.TdApi;
+
 import androidx.annotation.Nullable;
 
 public class LoginActivity extends Activity implements LoginListener {
@@ -82,11 +84,10 @@ public class LoginActivity extends Activity implements LoginListener {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				((App) getApplication()).getClient().getDriveChat(new ActionCallback() {
+				((App) getApplication()).getClient().getDriveChat(new ActionCallback<TdApi.Ok>() {
 					@Override
-					public Void call(Object o) {
+					public void toObject(TdApi.Ok ok) {
 						startActivity(new Intent(LoginActivity.this, FolderActivity.class));
-						return null;
 					}
 				});
 			}

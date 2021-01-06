@@ -1,24 +1,30 @@
 package com.github.telegram;
 
 import android.util.Log;
-import android.util.SparseArray;
-import android.util.SparseIntArray;
 
 import com.github.drive.Callback;
 
 import org.drinkless.td.libcore.telegram.Client;
 import org.drinkless.td.libcore.telegram.TdApi;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public abstract class TelegramAction implements Client.ResultHandler {
 	private final String TAG = this.getClass().getSimpleName();
 	private Callback<String, Void> logListener;
 	private Callback<DialogInfo, Void> inputListener;
 
-	@Override
-	public void onResult(TdApi.Object object) {
+	protected Client client;
+
+
+	public void create() {
+		Client.execute(new TdApi.SetLogVerbosityLevel(0));
+		client = Client.create(this, Throwable::printStackTrace, Throwable::printStackTrace);
+	}
+
+	public <T> void send(TdApi.Function function, ActionCallback<T> callback) {
+		if (function != null) {
+			Log.i("sunzc", ">>>>>:" + function.toString());
+			this.client.send(function, callback);
+		}
 	}
 
 	protected void log(String msg) {
@@ -43,5 +49,10 @@ public abstract class TelegramAction implements Client.ResultHandler {
 
 	public void setLogListener(Callback<String, Void> logListener) {
 		this.logListener = logListener;
+	}
+
+	@Override
+	public void onResult(TdApi.Object object) {
+
 	}
 }

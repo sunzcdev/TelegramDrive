@@ -2,24 +2,27 @@ package com.github.telegram;
 
 import org.drinkless.td.libcore.telegram.TdApi;
 
-public class AuthAction extends ClientAction {
+import java.util.ArrayList;
+import java.util.List;
+
+public class AuthAction extends TelegramAction {
 	private TdApi.TdlibParameters parameters;
 	private TdApi.AuthorizationState authorizationState;
 	private LoginListener loginListener;
-
+	private List<ActionCallback<TdApi.Update>> listeners;
 	public AuthAction(TdApi.TdlibParameters parameters) {
 		this.parameters = parameters;
+		listeners = new ArrayList<>();
 	}
 
 	@Override
-	public void send(int returnConstructor, TdApi.Function function, ActionCallback callback) {
+	public <T> void send(TdApi.Function function, ActionCallback<T> callback) {
 		if (authorizationState != null && authorizationState.getConstructor() == TdApi.AuthorizationStateReady.CONSTRUCTOR) {
-			super.send(returnConstructor, function, callback);
+			super.send(function, callback);
 		} else {
 			log("telegram未登录");
 		}
 	}
-
 
 	public void setParam() {
 		client.send(new TdApi.SetTdlibParameters(this.parameters), this);
@@ -47,7 +50,16 @@ public class AuthAction extends ClientAction {
 
 	@Override
 	public void onResult(TdApi.Object object) {
-		super.onResult(object);
+		log(object.toString());
+		if (object instanceof TdApi.Update && !listeners.isEmpty()) {
+			for (ActionCallback<TdApi.Update> listener : listeners) {
+				try {
+					listener.toObject((TdApi.Update) object);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		switch (object.getConstructor()) {
 			case TdApi.UpdateAuthorizationState.CONSTRUCTOR:
 				TdApi.UpdateAuthorizationState state = (TdApi.UpdateAuthorizationState) object;
@@ -117,5 +129,14 @@ public class AuthAction extends ClientAction {
 
 	public void setLoginListener(LoginListener loginListener) {
 		this.loginListener = loginListener;
+	}
+	public void registerUpdateListener(ActionCallback<TdApi.Update> callback) {
+		this.listeners.add(callback);
+	}
+
+	public void unregisterUpdateListener(ActionCallback<TdApi.Update> callback) {
+		if (this.listeners.remove(callback)) {
+			log("监听器移除成功");
+		}
 	}
 }

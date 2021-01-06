@@ -1,7 +1,5 @@
 package com.github.telegram;
 
-import android.util.Log;
-
 import com.github.drive.Callback;
 import com.github.utils.LogUtils;
 
@@ -9,7 +7,6 @@ import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class TelegramClient {
 	private static final String TAG = "client";
@@ -38,57 +35,93 @@ public class TelegramClient {
 		}
 	}
 
-	public void getDriveChat(ActionCallback callback) {
-		chat.GetChats(o -> {
-			TdApi.Chats chats = (TdApi.Chats) o;
-			if (chats.totalCount > 0) {
-				chat.SearchChat("Telegram drive", o1 -> {
-					TdApi.Chats chats1 = (TdApi.Chats) o1;
-					if (chats1.totalCount > 0) {
-						chat.GetChat(chats1.chatIds[0], o2 -> {
-							TdApi.Chat currentChat = (TdApi.Chat) o2;
-							chatId = currentChat.id;
-							user.GetMe(o3 -> {
-								TdApi.User user = (TdApi.User) o3;
-								userId = user.id;
-								callback.call(currentChat);
-								return null;
-							});
-							return null;
-						});
-					}
-					return null;
-				});
+	public void getDriveChat(ActionCallback<TdApi.Ok> callback) {
+		chat.GetChats(new ActionCallback<TdApi.Chats>() {
+			@Override
+			public void toObject(TdApi.Chats chats) {
+				if (chats.totalCount > 0) {
+					chat.SearchChat("Telegram drive", new ActionCallback<TdApi.Chats>() {
+						@Override
+						public void toObject(TdApi.Chats chats1) {
+							if (chats1.totalCount > 0) {
+								chat.GetChat(chats1.chatIds[0], new ActionCallback<TdApi.Chat>() {
+									@Override
+									public void toObject(TdApi.Chat currentChat) {
+										chatId = currentChat.id;
+										chat.OpenChat(chatId, callback);
+									}
+								});
+							} else {
+								chat.CreateNewSupergroupChat(new ActionCallback<TdApi.Chat>() {
+									@Override
+									public void toObject(TdApi.Chat currentChat) {
+										chatId = currentChat.id;
+										chat.OpenChat(chatId, callback);
+									}
+								});
+							}
+						}
+					});
+				}
 			}
-			return null;
 		});
 	}
 
 	public void listFiles(DriveFile directory, Callback<DriveFile[], Void> driveFileVoidCallback) {
-		message.listAll(userId, chatId, directory, o -> {
-			TdApi.Messages messages = (TdApi.Messages) o;
-			int size = messages.messages.length;
-			DriveFile[] files = new DriveFile[size];
-			if (size > 0) {
-				for (int i = 0; i < size; i++) {
-					TdApi.Message message = messages.messages[i];
-					files[i] = new DriveFile(message);
-				}
+		chat.OpenChat(chatId, new ActionCallback<TdApi.Ok>() {
+			@Override
+			public void toObject(TdApi.Ok ok) {
+				message.listAll(chatId, directory, new ActionCallback<TdApi.Messages>() {
+					@Override
+					public void toObject(TdApi.Messages messages) {
+						int size = messages.messages.length;
+						DriveFile[] files = new DriveFile[size];
+						if (size > 0) {
+							for (int i = 0; i < size; i++) {
+								TdApi.Message message = messages.messages[i];
+								files[i] = new DriveFile(message);
+							}
+						}
+						LogUtils.printArr(TAG + "--文件", files);
+						driveFileVoidCallback.call(files);
+					}
+				});
 			}
-			LogUtils.printArr(TAG + "--文件", files);
-			driveFileVoidCallback.call(files);
-			return null;
 		});
 	}
 
-	public void uploadFile(File localFile, DriveFile destDir, ActionCallback callback) {
+	public void uploadFile(File localFile, DriveFile destDir, ActionCallback<String> callback) {
 		DriveFile file = new DriveFile(localFile);
 		file.move(destDir);
-		message.UploadFile(chatId, localFile, file, callback);
+		chat.OpenChat(chatId, new ActionCallback<TdApi.Ok>() {
+			@Override
+			public void toObject(TdApi.Ok ok) {
+				String caption = System.currentTimeMillis() + "";
+				message.UploadFile(chatId, localFile, file, new ProgressListener<TdApi.Message, TdApi.RemoteFile>() {
+					@Override
+					public void onStart(TdApi.Message message) {
+					}
+
+					@Override
+					public void onProgress(float progress) {
+					}
+
+					@Override
+					public void onStop(TdApi.RemoteFile remoteFile) {
+						chat.CloseChat(chatId, new ActionCallback<TdApi.Ok>() {
+							@Override
+							public void toObject(TdApi.Ok ok) {
+								callback.toObject(caption);
+							}
+						});
+					}
+				});
+			}
+		});
 	}
 
-	public void downloadFile(DriveFile file, ActionCallback callback) {
-		message.DownloadFile(file, callback);
+	public void downloadFile(DriveFile file, ProgressListener<File, File> listener) {
+		message.DownloadFile(chatId, file, listener);
 	}
 
 	public void move(DriveFile file, DriveFile destDir, ActionCallback callback) {

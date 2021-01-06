@@ -5,7 +5,6 @@ import android.text.TextUtils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DriveFile {
@@ -170,15 +169,15 @@ public class DriveFile {
 	}
 
 	public String listAllChildren() {
-		return TAG_SEPARATOR + name + NO_SEPARATOR + (currentDirNo + 1) + CAPTION_SEPARATOR + TAG_SEPARATOR;
+		return TAG_SEPARATOR + name + NO_SEPARATOR + (currentDirNo + 1);
 	}
 
 	public String listChildrenFiles() {
-		return listAllChildren() + FILE_TAG;
+		return listAllChildren() + TAG_SEPARATOR + FILE_TAG;
 	}
 
 	public String listChildrenDirs() {
-		return listAllChildren() + DIRECTORY_TAG;
+		return listAllChildren() + TAG_SEPARATOR + DIRECTORY_TAG;
 	}
 
 	public String listUncles() {
