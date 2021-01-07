@@ -7,6 +7,8 @@ import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TelegramClient {
 	private static final String TAG = "client";
@@ -67,22 +69,22 @@ public class TelegramClient {
 		});
 	}
 
-	public void listFiles(DriveFile directory, Callback<DriveFile[], Void> driveFileVoidCallback) {
+	public void listFiles(DriveFile directory, Callback<List<DriveFile>, Void> driveFileVoidCallback) {
 		chat.OpenChat(chatId, new ActionCallback<TdApi.Ok>() {
 			@Override
 			public void toObject(TdApi.Ok ok) {
-				message.listAll(chatId, directory, new ActionCallback<TdApi.Messages>() {
+				message.listAll(chatId, directory, new ActionCallback<List<TdApi.Message>>() {
 					@Override
-					public void toObject(TdApi.Messages messages) {
-						int size = messages.messages.length;
-						DriveFile[] files = new DriveFile[size];
+					public void toObject(List<TdApi.Message> messages) {
+						int size = messages.size();
+						List<DriveFile> files = new ArrayList<>();
 						if (size > 0) {
 							for (int i = 0; i < size; i++) {
-								TdApi.Message message = messages.messages[i];
-								files[i] = new DriveFile(message);
+								TdApi.Message message = messages.get(i);
+								files.add(new DriveFile(message));
 							}
 						}
-						LogUtils.printArr(TAG + "--文件", files);
+						LogUtils.printList(TAG + "--文件", files);
 						driveFileVoidCallback.call(files);
 					}
 				});
@@ -97,7 +99,7 @@ public class TelegramClient {
 			@Override
 			public void toObject(TdApi.Ok ok) {
 				String caption = System.currentTimeMillis() + "";
-				message.UploadFile(chatId, localFile, file, new ProgressListener<TdApi.Message, TdApi.RemoteFile>() {
+				message.UploadFile(chatId, localFile, file, new ProgressListener<TdApi.Message, TdApi.File>() {
 					@Override
 					public void onStart(TdApi.Message message) {
 					}
@@ -107,7 +109,7 @@ public class TelegramClient {
 					}
 
 					@Override
-					public void onStop(TdApi.RemoteFile remoteFile) {
+					public void onStop(TdApi.File remoteFile) {
 						chat.CloseChat(chatId, new ActionCallback<TdApi.Ok>() {
 							@Override
 							public void toObject(TdApi.Ok ok) {

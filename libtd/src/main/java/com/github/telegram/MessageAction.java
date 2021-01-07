@@ -4,6 +4,9 @@ import org.drinkless.td.libcore.telegram.DriveFile;
 import org.drinkless.td.libcore.telegram.TdApi;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MessageAction extends TelegramAction {
 	private final AuthAction authAction;
@@ -40,22 +43,43 @@ public class MessageAction extends TelegramAction {
 		authAction.send(sendMsg, callback);
 	}
 
-	private void list(long chatId, String query, ActionCallback<TdApi.Messages> callback) {
+	private List<TdApi.Message> historyMessages = new ArrayList<>();
+
+	private void list(long chatId, String query, ActionCallback<List<TdApi.Message>> callback) {
 		TdApi.SearchMessagesFilterEmpty filter = new TdApi.SearchMessagesFilterEmpty();
-		TdApi.ChatList list = new TdApi.ChatListMain();
-		TdApi.SearchMessages function = new TdApi.SearchMessages(null, query, 0,0, 0, 100, filter, 0,0);
-		authAction.send(function, callback);
+		TdApi.SearchMessages function = new TdApi.SearchMessages(null,query,0,0,0,100,filter,0,0);
+//		TdApi.SearchChatMessages function = new TdApi.SearchChatMessages(chatId,query,null,0,0,100,filter,0);
+		authAction.send(function, new ActionCallback<TdApi.Messages>() {
+			@Override
+			public void toObject(TdApi.Messages messages) {
+				List<TdApi.Message> results = new ArrayList<>();
+				if (messages.totalCount > 0) {
+					Collections.addAll(results, messages.messages);
+				}
+				if (!historyMessages.isEmpty()) {
+					log("历史数据中有" + historyMessages.size() + "条");
+					for (TdApi.Message historyMessage : historyMessages) {
+						TdApi.FormattedText caption = getCaption(historyMessage.content);
+						if (caption != null && caption.text.contains(query)) {
+							results.add(historyMessage);
+						}
+					}
+				}
+				callback.toObject(results);
+			}
+		});
 	}
 
-	public void listAll(long chatId, DriveFile directory, ActionCallback<TdApi.Messages> callback) {
+
+	public void listAll(long chatId, DriveFile directory, ActionCallback<List<TdApi.Message>> callback) {
 		list(chatId, directory.listAllChildren(), callback);
 	}
 
-	public void listFile(long chatId, DriveFile directory, ActionCallback<TdApi.Messages> callback) {
+	public void listFile(long chatId, DriveFile directory, ActionCallback<List<TdApi.Message>> callback) {
 		list(chatId, directory.listChildrenFiles(), callback);
 	}
 
-	public void listDir(long chatId, DriveFile directory, ActionCallback<TdApi.Messages> callback) {
+	public void listDir(long chatId, DriveFile directory, ActionCallback<List<TdApi.Message>> callback) {
 		list(chatId, directory.listChildrenDirs(), callback);
 	}
 
@@ -66,7 +90,7 @@ public class MessageAction extends TelegramAction {
 		authAction.send(new TdApi.SendMessage(chatId, 0, 0, null, null, content), callback);
 	}
 
-	public void UploadFile(long chatId, File localFile, DriveFile driveFile, ProgressListener<TdApi.Message, TdApi.RemoteFile> listener) {
+	public void UploadFile(long chatId, File localFile, DriveFile driveFile, ProgressListener<TdApi.Message, TdApi.File> listener) {
 		TdApi.InputFile inputFile = new TdApi.InputFileLocal(localFile.getAbsolutePath());
 		TdApi.FileType fileType = new TdApi.FileTypeDocument();
 		TdApi.UploadFile uploadFile = new TdApi.UploadFile(inputFile, fileType, 32);
@@ -76,13 +100,26 @@ public class MessageAction extends TelegramAction {
 				authAction.registerUpdateListener(new ActionCallback<TdApi.Update>() {
 					@Override
 					public void toObject(TdApi.Update update) {
+						if (update instanceof TdApi.UpdateMessageSendSucceeded) {
+							TdApi.UpdateMessageSendSucceeded message = (TdApi.UpdateMessageSendSucceeded) update;
+							TdApi.FormattedText caption = getCaption(message.message.content);
+							if (caption != null && caption.text.equals(driveFile.getCaption())) {
+								authAction.unregisterUpdateListener(this);
+								Collections.addAll(historyMessages, message.message);
+								listener.onStop(file);
+							}
+						}
+					}
+				});
+				authAction.registerUpdateListener(new ActionCallback<TdApi.Update>() {
+					@Override
+					public void toObject(TdApi.Update update) {
 						if (update instanceof TdApi.UpdateFile) {
 							TdApi.RemoteFile remoteFile = ((TdApi.UpdateFile) update).file.remote;
 							TdApi.File file1 = ((TdApi.UpdateFile) update).file;
 							if (file.id == file1.id) {
 								if (file1.remote.isUploadingCompleted) {
 									authAction.unregisterUpdateListener(this);
-									listener.onStop(remoteFile);
 								} else {
 									listener.onProgress((float) remoteFile.uploadedSize / (float) file.expectedSize);
 								}
@@ -106,14 +143,14 @@ public class MessageAction extends TelegramAction {
 		authAction.send(remoteFile, callback);
 	}
 
-	public void DownloadFile(long chatId, DriveFile caption, ProgressListener<File, File> callback) {
-		list(chatId, caption.listAllChildren(), new ActionCallback<TdApi.Messages>() {
+	public void DownloadFile(long chatId, DriveFile file, ProgressListener<File, File> callback) {
+		list(chatId, file.getCaption(), new ActionCallback<List<TdApi.Message>>() {
 			@Override
-			public void toObject(TdApi.Messages messages) {
-				if (messages.totalCount <= 0) {
+			public void toObject(List<TdApi.Message> messages) {
+				if (messages.isEmpty()) {
 					return;
 				}
-				TdApi.Message msg = messages.messages[0];
+				TdApi.Message msg = messages.get(0);
 				int fileId = getFileId(msg.content);
 				if (fileId == 0) return;
 				TdApi.DownloadFile downloadFile = new TdApi.DownloadFile(fileId, 32, 0, 0, false);
@@ -167,5 +204,20 @@ public class MessageAction extends TelegramAction {
 			return ((TdApi.MessageAudio) content).audio.audio.id;
 		}
 		return -1;
+	}
+
+	private TdApi.FormattedText getCaption(TdApi.MessageContent content) {
+		if (content instanceof TdApi.MessageDocument) {
+			return ((TdApi.MessageDocument) content).caption;
+		} else if (content instanceof TdApi.MessagePhoto) {
+			return ((TdApi.MessagePhoto) content).caption;
+		} else if (content instanceof TdApi.MessageVideo) {
+			return ((TdApi.MessageVideo) content).caption;
+		} else if (content instanceof TdApi.MessageAnimation) {
+			return ((TdApi.MessageAnimation) content).caption;
+		} else if (content instanceof TdApi.MessageAudio) {
+			return ((TdApi.MessageAudio) content).caption;
+		}
+		return null;
 	}
 }

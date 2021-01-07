@@ -2,17 +2,16 @@ package com.github.telegram;
 
 import org.drinkless.td.libcore.telegram.TdApi;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class AuthAction extends TelegramAction {
 	private TdApi.TdlibParameters parameters;
 	private TdApi.AuthorizationState authorizationState;
 	private LoginListener loginListener;
-	private List<ActionCallback<TdApi.Update>> listeners;
+	private CopyOnWriteArraySet<ActionCallback<TdApi.Update>> listeners;
 	public AuthAction(TdApi.TdlibParameters parameters) {
 		this.parameters = parameters;
-		listeners = new ArrayList<>();
+		listeners = new CopyOnWriteArraySet<>();
 	}
 
 	@Override
